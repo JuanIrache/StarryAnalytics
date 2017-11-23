@@ -418,7 +418,7 @@ function updateFeedbackFrame() {
 }
 
 //////////////google data retrieving
-var CLIENT_ID = '347798334249-tf4endbgfnkh6670g5k5le0t5ljhv50j.apps.googleusercontent.com';
+var CLIENT_ID = 'REPLACE CLIENT ID';
 // Set authorized scope.
 var SCOPES = ['https://www.googleapis.com/auth/analytics.readonly'];
 
