@@ -1,18 +1,6 @@
-
-//TODO
-//dates!
-//datefeedback (only on stills?)
-//auth button (reuse real and reposition)
-//font Size
-//look for brightest frame for still preview
-//canvaas resize, reprint if not drawing and if draing and done but not paintfromdraw
-//analoytics
-//pages for more than 10000 results per queryReports NO
-//signout
-// github?
-//Limit data to avoid penalties on site or google
-// zoom into area
-//add other metrics
+var center;
+var ww;
+var hh;//512*85/160;
 var img;
 var sliderP;
 var palettesJSON;
@@ -51,6 +39,20 @@ var created;
 var changeToMovie;
 var loaded;
 var feedback;
+var auth;
+var zoomLevel;
+var doRefreshMap;
+var zoom = 1;
+var addBackground = false;
+var timelineSet = false;
+var enableMovie1;
+var enableMovie2;
+//var logOutB;
+
+var brightestFrame = {
+  index:0,
+  value:0
+}
 
 function preload() {
   img = loadImage("1229.png");
@@ -59,27 +61,79 @@ function preload() {
 }
 
 function setup() {
-
   ww = windowWidth;
   hh = windowWidth*(512/1024);//512*85/160;
+  
   can = createCanvas(ww,hh);
-
   can.position(0,0);
   can.style("z-index","-1");
+  center = createVector(0,0);
   var palettes = palettesJSON.palettes;
   palette = palettes[floor(random(0,palettes.length))];
   refreshLabels()
 
   intro = createElement("h2","Starry Analytics");
-  introB = createP("Load your analytics data and play with the settings to create the world map of your users.<br>This is quite experimental, so expect bugs.<br>Can be quite slow when loading many dates or sessions.<br>Set points and opacity to low when creating stills. They will add up.<br>have fun and feel free to provide feedback.<br>");
-
-  var auth = createButton("Authorize");
-  auth.id("auth-button");
-  //auth.hide();
+  introB = createP("Load your Google Analytics data and play with the settings to create the world map of your users' sessions.<br>For apps, each colour represents a package. For sites, colours are devices.<br>This is quite experimental, so expect bugs.<br>Can be quite slow when loading many dates or sessions. Select short time frames first.<br>Set points and opacity to low when creating stills. They will add up.<br>Have fun and feel free to provide feedback and contribute <a href='https://github.com/JuanIrache/StarryAnalytics' target='blank'>here</a>.<br>Built with <a href='https://p5js.org/' target='blank'>P5js</a>.<br>");
+  introB.id("introB");
+  auth = select("#auth-button");
   auth.parent(introB);
   document.getElementById('auth-button').addEventListener('click', authorize);
 
   image(img,0,0,width,height);
+  styles();
+}
+
+function clickObject() {
+  objectClicked = true;
+}
+
+function mousePressed() {
+  if (mouseX<0 || mouseY<0 || mouseX>width || mouseY>height) {
+    objectClicked = true;
+  }
+}
+
+function mouseReleased() {
+  objectClicked = false;
+}
+
+function doubleClicked() {
+  if (loaded && !paintFromDraw && !objectClicked) {
+    var move = createVector((width/2-mouseX),height/2-mouseY);
+      move.x = map(move.x,-width/2,width/2,-180,180);//convert pixels to latlong, approx
+      move.y = map(move.y,-height/2,height/2,-90,90);
+      center.x -= move.x/zoom;
+      center.y += move.y/zoom;//
+      doRefreshMap = true;
+      console.log("doRefreshMap double");
+    var preZoom = zoomLevel.value()*1.4;
+    zoomLevel.value(constrain(preZoom,100,775));
+    setZoom();
+    return false;
+  }
+}
+
+function mouseWheel(event) {
+  if (loaded && !paintFromDraw && !objectClicked) {
+    var preZoom = zoomLevel.value()-(event.delta/3);
+    zoomLevel.value(constrain(preZoom,100,775));
+    setZoom();
+  }
+  //uncomment to block page scrolling
+  return false;
+}
+
+function mouseDragged() {
+  if (loaded && !objectClicked && !paintFromDraw && zoom > 1) {
+      var move = createVector((mouseX-pmouseX),mouseY-pmouseY);
+      move.x = map(move.x,-width/2,width/2,-180,180);//convert pixels to latlong, approx
+      move.y = map(move.y,-height/2,height/2,-90,90);
+      center.x -= move.x/zoom;
+      center.y += move.y/zoom;//
+      doRefreshMap = true;
+      console.log("doRefreshMap drag");
+    return false;
+  }
 }
 
 function refreshLabels() {
@@ -97,13 +151,22 @@ function draw() {
   if (!drawing)  {
     //background(0);
     image(img,0,0,width,height);
-  }
+  } else if (paintFromDraw) {
 
-  if (paintFromDraw) {
     updateFeedbackFrame();
     paintMap(true);
   }
+
+  if (paintFromDraw && saveCan) {//the previous function can override it
+      savePhoto(true);
+  }
+
+  if (doRefreshMap) {
+    doRefreshMap = false;
+    preRefreshMap();
+  }
 }
+
 
 function paintMap(advance) {
 
@@ -111,40 +174,34 @@ function paintMap(advance) {
 
     blendMode(BLEND);
     background(0);
+    intro.hide();
+    introB.hide();
+    var setuPs = selectAll(".setupB");
+    for (let i=0;i<setuPs.length;i++) {
+      setuPs[i].hide();
+    }
+    drawing = true;
+    sliderP = createP("");
+    feedback = createP("");
+    loadedP = createP("");
+    loadedP.addClass("sided");
+  }
 
-      let progress = frame/((endDay.value()-minusStartDay.value()));
-      sliderP = createP("");
-      feedback = createP("");
-      loadedP = createP("");
-      loadedP.class("sided");
-  }
-  /*
-  //zoom
-  if (mouseIsPressed) {
-    zoom = constrain(zoom+.03,1,10);
-  } else {
-    zoom = constrain(zoom-.03,1,10);
-  }
-  clon = map(mouseX,0,width,-180,180);
-  clat = map(mouseY,0,height,90,-90);
-*/
-  push();
-  translate(width / 2, height / 2);
-  if (movie.value()==1 || !drawing) {
-    if (movie.value()==1) {
+  
+  
+
+  if (movie.value()==1 || !drawing || addBackground) {
+    if (movie.value()==1 || addBackground) {
       blendMode(BLEND);
     }
     background(0);
+    addBackground = false;
   }
-  intro.hide();
-  introB.hide();
-  drawing = true;
-  //console.log(minusStartDay);
 
   blendMode(SCREEN);
   let alpha = initialAlphaLevel;
   if (alphaLevel) {
-    alpha = alphaLevel.value();
+    alpha = alphaLevel.value()/10;
   }
   let multiplier = initialPointSize;
   if (pointSize) {
@@ -152,6 +209,10 @@ function paintMap(advance) {
   }
   if (locations[frame] && locations[frame].length > 0) {
   for (let i=0;i<locations[frame].length;i++) {
+    if (locations[frame].length > brightestFrame.value) {
+      brightestFrame.index = frame;
+      brightestFrame.value = locations[frame].length;
+    }
     if (!(locations[frame][i][1]==0 && locations[frame][i][0]==0)) {
         var c = color(0);
           if (labels.indexOf(locations[frame][i][2])==-1) {
@@ -177,95 +238,110 @@ function paintMap(advance) {
 
         stroke (red(c),green(c),blue(c),alpha);
         var lon = locations[frame][i][1];
-        var lat = locations[frame][i][0];
-        var cx = mercX(clon);
-        var cy = mercY(clat);
-
-        var x = mercX(lon) - cx;
-        var y = mercY(lat) - cy;
-        // This addition fixes the case where the longitude is non-zero and
-        // points can go off the screen.
-        /*if(x < - width/2) {
-          x += width;
-        } else if(x > width / 2) {
-          x -= width;
-        }*/
-        let units = (locations[frame][i][3])*multiplier;//(locations[i][3])*multiplier;//area / divided as user wants?
-        //console.log(units);
-
-        let diameter = (sqrt(units/PI)*2);
+        var lat = -locations[frame][i][0];
+        lon = parseFloat(lon-center.x);// wtf? returning string otherwise
+        lat = parseFloat(lat+center.y);
+        lon *= zoom;
+        lat *= zoom;
+        var x = map(lon,-180,180,-width/2,width/2);
+        var y = map(lat,-90,90,-height/2,height/2);
+        let value = (locations[frame][i][3])*multiplier;//divided as user wants?
+        let diameter = (sqrt(value/PI)*2);
         strokeWeight(diameter);
+        push();
+        translate(width/2,height/2);
         point(x,y);
-      }
+        
+        pop();
+      } 
     }
   } else {
-    console.log("Error. No locations for frame");
+    //console.log("Error. No locations for frame");
   }
 
-  if (!loaded||movie.value()==0) {
-    let progress = frame/((endDay.value()-minusStartDay.value()));
-    feedback.html("Loading data "+round(progress*100)+"%");
-  }
-
-  if (saveCan) {
-    saveCanvas(can,nf(frame,4),"png");
-  }
-
+  let progress = frame/((endDay.value()-minusStartDay.value()));
+    if (loaded) {
+      feedback.html(""+round(progress*100)+"%");
+    } else {
+      feedback.html("Loading data "+round(progress*100)+"%");
+    }
+    
   if (advance) {
     if (minusStartDay.value()+frame < endDay.value()) {
       frame++;
-      if (loaded) {
-      } else {
+      if (!loaded) {
         queryCoreReportingApi(selectedProfile);
       }
     } else if (!loaded) {
       loaded = true;
+      paintFromDraw = false;
       feedback.style("visibility","hidden");
 
-      if (movie.value() == 1) {
+      //if (movie.value() == 1) {
         allSlider = createSlider(minusStartDay.value(),endDay.value(),endDay.value());
+        allSlider.mousePressed(clickObject);
         allSlider.input(slideTimeline);
         allSlider.parent(sliderP);
         allSlider.style("width","90%");
         feedbackFrame = createDiv("");
         feedbackFrame.parent(loadedP);
         updateFeedbackFrame();//
-      }
-      var line = createDiv("<br>Point Size");
-      line.parent(loadedP);
+      //}
+      var lin = createDiv("<br>Point Size");
+      lin.parent(loadedP);
 
       pointSize = createSlider(10,1000,(initialPointSize*10));
+      pointSize.mousePressed(clickObject);
       pointSize.parent(loadedP);
-      pointSize.input(refreshMap);
+      pointSize.input(prepareRefreshMap);
+      pointSize.style("width","15%");
+      lin = createDiv("Opacity");
+      lin.parent(loadedP);
 
-      line = createDiv("<br>Opacity");
-      line.parent(loadedP);
-
-      alphaLevel = createSlider(1,255,initialAlphaLevel);
+      alphaLevel = createSlider(10,2550,initialAlphaLevel*10);
+      alphaLevel.mousePressed(clickObject);
       alphaLevel.parent(loadedP);
-      alphaLevel.input(refreshMap);
+      alphaLevel.input(prepareRefreshMap);
+      alphaLevel.style("width","15%");
+      lin = createDiv("Zoom");
+      lin.parent(loadedP);
 
-      line = createDiv("<br>");
-      line.parent(loadedP);
+      zoomLevel = createSlider(100,775,100);
+      zoomLevel.mousePressed(clickObject);
+      zoomLevel.parent(loadedP);
+      zoomLevel.input(setZoom);
+      zoomLevel.style("width","15%");
+      lin = createDiv("<br>");
+      lin.parent(loadedP);
+      lin.addClass("noLine");
 
       coloursButton = createButton("Random Colours");
       coloursButton.parent(loadedP);
       coloursButton.mousePressed(shuffleColours);
 
-      line = createDiv("<br>");
-      line.parent(loadedP);
+      lin = createDiv("<br>");
+      lin.parent(loadedP);
+      lin.addClass("noLine");
       takePhoto = createButton("Photo");
       takePhoto.mousePressed(savePhoto);//
       takePhoto.parent(loadedP);
       loadLowButtons();
 
-      line = createP("");
-      line.parent(loadedP);
-      line.class("sided");//
+      lin = createP("");
+      lin.parent(loadedP);
+      lin.addClass("sided");//
       for (let i=0; i<labels.length; i++) {
-        labelDivs[i] = createDiv(labels[i]);
-        labelDivs[i].id("label"+i);
-        labelDivs[i].parent(line);
+        if ((i>=6 && labels.length > 7)) {
+          labelDivs[i] = createDiv("Other...");
+          labelDivs[i].id("label"+i);
+          labelDivs[i].parent(lin);
+          labelDivs[i].mousePressed(clickObject);
+        } else {
+          labelDivs[i] = createDiv(labels[i]);
+          labelDivs[i].id("label"+i);
+          labelDivs[i].parent(lin);
+          labelDivs[i].mousePressed(clickObject);
+        }
       }
 
       refreshLabels();
@@ -273,10 +349,12 @@ function paintMap(advance) {
       if (movie.value() == 1) {
         showButtons(".still",false);
         showButtons(".movie",true);
+        showLabels(true);
         if (allSlider) allSlider.style("visibility","visible");
       } else {
-        showButtons(".still",true);
         showButtons(".movie",false);
+        showButtons(".still",true);
+        showLabels(true);
         if (allSlider) allSlider.style("visibility","hidden");
       }
     } else {
@@ -284,62 +362,119 @@ function paintMap(advance) {
       if (movie.value() == 1) {
         showButtons(".still",false);
         showButtons(".movie",true);
+        showLabels(true);
         if (allSlider) allSlider.style("visibility","visible");
       } else {
-        showButtons(".still",true);
         showButtons(".movie",false);
+        showButtons(".still",true);
+        showLabels(true);
         if (allSlider) allSlider.style("visibility","hidden");
       }
       if (feedback) feedback.style("visibility","hidden");
     }
   }
-  pop();
+  styles();
+}
+
+function prepareRefreshMap() {
+  doRefreshMap = true;
+  console.log("doRefreshMap prepare");
+}
+
+function preRefreshMap() {
+  if (loaded) {
+    center.x = constrain(center.x,-180+(180/zoom),180-(180/zoom));
+    center.y = constrain(center.y,-90+(90/zoom),90-(90/zoom));
+    if (movie.value() == 0) {
+      frame = brightestFrame.index;
+      updateFeedbackFrame();
+    }
+    refreshMap();
+    
+    if (movie.value() == 0) {
+      fill(255);
+      noStroke();
+      textAlign(CENTER,CENTER);
+      text("Please update result to see real effect",width/2,height/2);
+    }
+  }
 }
 
 function movieToStill() {
+  objectClicked = true;
   movie.value(0);
   redoStill();
   showButtons(".movie",false);
+  showLabels(false);
+  addBackground = true;
 }
 
 function stillToMovie() {
+  objectClicked = true;
   movie.value(1);
   playTimelineStart();
   showButtons(".still",false);
+  showLabels(false);
 }
 
 function loadLowButtons() {
-  line = createDiv("<br>");
-  line.parent(loadedP);
-  line.class("movie");
+  var lin = createDiv("<br>");
+  lin.parent(loadedP);
+  lin.addClass("movie");
+  lin.addClass("noLine");
   playTimeline = createButton("Play");
   playTimeline.mousePressed(playTimelineStart);//
   playTimeline.parent(loadedP);
-  playTimeline.class("movie");
+  playTimeline.addClass("movie");
+  enableMovie2 = createCheckbox('Download frames for movie', false);
+  enableMovie2.addClass("movie");
+  enableMovie2.changed(toggleMovie2);
+  enableMovie2.addClass("unselectable");
 
-  line = createDiv("<br>");
-  line.parent(loadedP);
-  line.class("movie");
+  lin = createDiv("<br>");
+  lin.parent(loadedP);
+  lin.addClass("movie");
+  lin.addClass("noLine");
   changeToStill = createButton("Change to Still");
   changeToStill.mousePressed(movieToStill);//
   changeToStill.parent(loadedP);
-  changeToStill.class("movie");
+  changeToStill.addClass("movie");
 
-  var line = createDiv("<br>");
-  line.parent(loadedP);
-  line.class("still");
+  lin = createDiv("<br>");
+  lin.parent(loadedP);
+  lin.addClass("still");
+  lin.addClass("noLine");
   stillButton = createButton("Update result");
   stillButton.parent(loadedP);
   stillButton.mousePressed(redoStill);
-  stillButton.class("still");
+  stillButton.addClass("still");
+  enableMovie1 = createCheckbox('Download frames for movie', false);
+  enableMovie1.addClass("still");
+  enableMovie1.changed(toggleMovie1);
+  enableMovie1.addClass("unselectable");
 
-  line = createDiv("<br>");
-  line.parent(loadedP);
-  line.class("still");
+  lin = createDiv("<br>");
+  lin.parent(loadedP);
+  lin.addClass("still");
+  lin.addClass("noLine");
   changeToMovie = createButton("Change to Timeline");
   changeToMovie.mousePressed(stillToMovie);//
   changeToMovie.parent(loadedP);
-  changeToMovie.class("still");
+  changeToMovie.addClass("still");
+
+  styles();
+}
+
+function toggleMovie1() {
+  objectClicked = true;
+  saveCan = enableMovie1.checked();
+  enableMovie2.checked(saveCan);
+}
+
+function toggleMovie2() {
+  objectClicked = true;
+  saveCan = enableMovie2.checked();
+  enableMovie1.checked(saveCan);
 }
 
 function showButtons(s,vis) {
@@ -351,7 +486,9 @@ function showButtons(s,vis) {
       buttons[i].hide();
     }
   }
+}
 
+function showLabels(vis) {
   for (var i=0; i<labelDivs.length;i++) {
     if (vis) {
       labelDivs[i].show();
@@ -361,18 +498,23 @@ function showButtons(s,vis) {
   }
 }
 
-function shuffleColours() {
+function shuffleColours() {//
+  objectClicked = true;
   var palettes = palettesJSON.palettes;
   palette = palettes[floor(random(0,palettes.length))];
   refreshLabels();
-  refreshMap();
+  doRefreshMap = true;
+  console.log("doRefreshMap shuffle");
 }
 
 function playTimelineStart() {
+  objectClicked = true;
   frame = 0;
+  if (feedback) feedback.style("visibility","visible");
   if (allSlider) allSlider.style("visibility","hidden");
   paintFromDraw = true;
   showButtons(".movie",false);
+  showLabels(false);
 }
 
 function refreshMap() {
@@ -389,17 +531,27 @@ function refreshMap() {
 
 }
 function redoStill() {
+  objectClicked = true;
   if (feedback) feedback.style("visibility","visible");
-  background(0);
   showButtons(".still",false);
+  showLabels(false);
   frame = 0;
   if (allSlider) allSlider.style("visibility","hidden");
   paintFromDraw = true;
+  addBackground = true;//funciton background(0); fails?
+  background(0);
 }
 
-function savePhoto() {
-  //aqui put watermark
-  saveCanvas(can,nf(dateFromSince(minusStartDay.value()+frame,false),4),"png");
+function savePhoto(noTLicked) {
+  if (noTLicked == null) objectClicked = true;
+  // put watermark
+  var tempImage = get();
+  var graph = createGraphics(ww,hh);
+  graph.image(tempImage,0,0);
+  graph.fill(255,120);
+  graph.textAlign(RIGHT,BOTTOM);
+  graph.text("tailorandwayne.com/starry-analytics",graph.width*.98,graph.height*.97);
+  save(graph,dateFromSince(-minusStartDay.value()-frame,false),"png");
 }
 
 function slideTimeline() {
@@ -418,7 +570,7 @@ function updateFeedbackFrame() {
 }
 
 //////////////google data retrieving
-var CLIENT_ID = 'REPLACE CLIENT ID';
+var CLIENT_ID = 'REPLACE WITH CLIENT ID';
 // Set authorized scope.
 var SCOPES = ['https://www.googleapis.com/auth/analytics.readonly'];
 
@@ -429,7 +581,9 @@ function authorize(event) {
   var authData = {
     client_id: CLIENT_ID,
     scope: SCOPES,
-    immediate: useImmdiate
+    immediate: useImmdiate,
+    cookie_policy: 'single_host_origin',
+    response_type: 'token id_token'
   };
 
   gapi.auth.authorize(authData, function(response) {
@@ -452,35 +606,90 @@ gapi.client.load('analytics', 'v3').then(function() {
 });
 }
 
-function handleAccounts(response) {
 
-  if (response.result.items && response.result.items.length) {
-    var check = select("#accountsP");
+function signOut() {
+   gapi.auth.signOut();
+   //versions I tried
+/*gapi.auth.authorize({ 'client_id': CLIENT_ID, 'scope': SCOPES, 'immediate': false, cookie_policy: 'single_host_origin'}, function (authResult) {
+    gapi.auth.signOut();
+    setTimeout(function() {
+        gapi.auth.authorize({ 'client_id': CLIENT_ID, 'scope': SCOPES, 'immediate': true, cookie_policy: 'single_host_origin'}, function (authResult) {
+            if (authResult && !authResult.error)
+                alert("Still signed in");
+        })
+    }, 5000);
+ });*/
+  /*gapi.auth.authorize({ 'client_id': CLIENT_ID, 'scope': SCOPES, 'immediate': false, cookie_policy: 'single_host_origin', response_type: 'token id_token'}, function (authResult) {
+    gapi.auth.signOut();
+    setTimeout(function() {
+      gapi.auth.authorize({ 'client_id': CLIENT_ID, 'scope': SCOPES, 'immediate': true, cookie_policy: 'single_host_origin'}, function (authResult) {
+        if (authResult && !authResult.error)
+          alert("Wrong! Still signed in");
+        else
+          alert("Correct! Signed out");
+      })
+    }, 5000);
+  });*/
+
+ // gapi.auth.signOut();
+
+   /*gapi.auth.authorize(
+    { 
+        'client_id': CLIENT_ID, 
+        'scope': SCOPES, 
+        'immediate': false,
+        cookie_policy: 'single_host_origin',
+        response_type: 'token id_token'
+    },
+    function (authResult) {   gapi.auth.signOut();}
+);*/
+}
+
+function handleAccounts(response) {
+  var check = select("#accountsP");
     if (check == null) {
-      var hidden = createDiv("");
-      hidden.id("hidden");
-      hidden.hide();
+  if (response.result.items && response.result.items.length) {
+    
+      //logout not working
+      //logOutB = createButton("Log out");
+      //logOutB.id("LogGout");
+      //logOutB.parent("#introB");
+      //logOutB.mousePressed(signOut);
+      //logOutB.mousePressed(clickObject);
+      if (auth) auth.hide();
+      var errs = selectAll(".error");
+      for (let i=0;i<errs.length;i++) {
+        err[i].hide();
+      }
       let items = response.result.items;
       var accountsP = createP("Select Account<br>");
       accountsP.id("accountsP");
+      accountsP.addClass("setupB");
       if (items.length>1) {
         for (let i=0; i<items.length; i++) {
           var but = createButton(items[i].name);
           but.id(items[i].id);
           but.parent(accountsP);
+          but.addClass("setupB");
           but.mousePressed(selectAccount);
         }
       } else {
         selectedAccount = items[0].id;
         queryProperties(selectedAccount);
       }
+      styles();
+    } else {
+      var err = createP('No accounts found for this user.');
+      err.addClass("setupB");
+      err.addClass("error");
+      styles();
     }
-  } else {
-    createP('No accounts found for this user.');
+    
   }
 }
 
 function selectAccount() {
+  objectClicked = true;
   //console.log(this.elt.id);
   selectedAccount = this.elt.id;
   queryProperties(selectedAccount);
@@ -496,39 +705,52 @@ gapi.client.analytics.management.webproperties.list(
     // Log any errors.
     createP('Error');
     console.log(err);
-});
+    styles();
+  });
 }
 
 function handleProperties(response) {
 
 //console.log(response);
 // Handles the response from the webproperties list method.
-if (response.result.items && response.result.items.length) {
-  let accountsP = select("#accountsP");
-  accountsP.hide();
-  let items = response.result.items;
-  var propertiesP = createP("Select Property<br>");
-  propertiesP.id("propertiesP");
-  if (items.length > 1) {
-    for (let i=0; i<items.length; i++) {
-      var but = createButton(items[i].name);
-      but.id(items[i].id);
-      but.parent(propertiesP);
-      but.mousePressed(selectProperty);
+var check = select("#propertiesP");
+    if (check == null) {
+      if (response.result.items && response.result.items.length) {
+        var errs = selectAll(".error");
+        for (let i=0;i<errs.length;i++) {
+          err[i].hide();
+        }
+        let accountsP = select("#accountsP");
+        accountsP.hide();
+        let items = response.result.items;
+        if (items.length > 1) {
+        var propertiesP = createP("Select Property<br>");
+        propertiesP.id("propertiesP");
+        propertiesP.addClass("setupB");
+          for (let i=0; i<items.length; i++) {
+            var but = createButton(items[i].name);
+            but.id(items[i].id);
+            but.parent(propertiesP);
+            but.addClass("setupB");
+            but.mousePressed(selectProperty);
+          }
+        } else {
+          selectedProperty = items[0].id;
+          queryProfiles(selectedAccount, selectedProperty);
+        }
+        styles();
+          // Query for Views (Profiles).
+          //queryProfiles(selectedAccountID, selectedPropertyId);
+      } else {
+        console.log('No properties found for this user.');
+        createP('No properties found for this user');
+        styles();
+      }
     }
-  } else {
-    selectedProperty = items[0].id;
-    queryProfiles(selectedAccount, selectedProperty);
-  }
-    // Query for Views (Profiles).
-    //queryProfiles(selectedAccountID, selectedPropertyId);
-  } else {
-    console.log('No properties found for this user.');
-    createP('No properties found for this user');
-  }
 }
 
 function selectProperty() {
+  objectClicked = true;
   //console.log(this);
   selectedProperty = this.elt.id;
   queryProfiles(selectedAccount, selectedProperty);
@@ -545,76 +767,101 @@ gapi.client.analytics.management.profiles.list({
 .then(null, function(err) {
     // Log any errors.
     console.log(err);
-    createP("Error");
-});
+    var err = createP("Error. Please retry");
+    err.addClass("setupB");
+    err.addClass("error");
+    styles();
+
+  });
 }
 
 function handleProfiles(response) {
+
+  var check = select("#profilesP");
+    if (check == null) {
   //console.log(response);
 // Handles the response from the profiles list method.
-if (response.result.items && response.result.items.length) {
-
-    let propertiesP = select("#propertiesP");
-    propertiesP.hide();
-
-    let items = response.result.items;
-    profilesP = createP("Select Profile<br>");
-    profilesP.id("profilesP");
-    //profilesP.style("background-color","black");
-    if (items.length > 1) {
-      for (let i=0; i<items.length; i++) {
-        var but = createButton(items[i].name,items[i].type+","+items[i].created);
-        but.id(items[i].id);
-        but.parent(profilesP);
-        but.mousePressed(selectProfile);
+      if (response.result.items && response.result.items.length) {
+        var errs = selectAll(".error");
+        for (let i=0;i<errs.length;i++) {
+          err[i].hide();
+        }
+          let propertiesP = select("#propertiesP");
+          if (propertiesP) propertiesP.hide();
+          let items = response.result.items;
+          if (items.length > 1) {
+            profilesP = createP("Select Profile<br>");
+            profilesP.id("profilesP");
+            profilesP.addClass("setupB");
+          //profilesP.style("background-color","black");
+            for (let i=0; i<items.length; i++) {
+              var but = createButton(items[i].name,items[i].type+","+items[i].created);
+              but.id(items[i].id);
+              but.parent(profilesP);
+              but.addClass("setupB");
+              but.mousePressed(selectProfile);
+            }
+          } else {
+            selectedProfile = items[0].id;
+            type = items[0].type;
+            created = new Date(items[0].created);
+            timelineSettings();
+          }
+          styles();
+        } else {
+          console.log('No views (profiles) found for this user.');
+          var err = createP("No views (profiles) found for this user.");
+          err.addClass("setupB");
+          err.addClass("error");
+          styles();
+        }
       }
-    } else {
-      selectedProfile = items[0].id;
-      type = items[0].type;
-      created = new Date(items[0].created);
-      timelineSettings();
-    }
-  } else {
-    console.log('No views (profiles) found for this user.');
-    createP("No views (profiles) found for this user.");
-  }
 }
 
 function timelineSettings() {
-  profilesP.hide();
-  var timelineP = createP("Select date range<br>");
-  timelineP.id("timelineP");
-  //timelineP.style("background-color","black");
-  minusStartDay = createSlider(-timeSince(created),0,-timeSince(created));
-  minusStartDay.input(minusStartDayInput);
-  minusStartDay.parent(timelineP);
-  minusStartDay.id("#minusStartDay");
-  minusStartDay.style("width","40%");
-  feed1 = createDiv(dateFromSince(-minusStartDay.value(),true));
-  feed1.parent(timelineP);
-  feed1.id("feed1");
+  if (!timelineSet) {
+    timelineSet = true;
+    if (profilesP) profilesP.hide();
+    var timelineP = createP("Select date range<br>");
+    timelineP.id("timelineP");
+    //timelineP.style("background-color","black");
+    minusStartDay = createSlider(-timeSince(created),-2,-timeSince(created));
+    minusStartDay.mousePressed(clickObject);
+    minusStartDay.input(minusStartDayInput);
+    minusStartDay.parent(timelineP);
+    minusStartDay.id("#minusStartDay");
+    minusStartDay.style("width","40%");
+    feed1 = createDiv(dateFromSince(-minusStartDay.value(),true));
+    feed1.parent(timelineP);
+    feed1.id("feed1");
 
-  endDay = createSlider(-timeSince(created),0,0);
-  endDay.input(endDayInput);
-  endDay.parent(timelineP);
-  endDay.id("#endDay");
-  endDay.style("width","40%");
-  feed2 = createDiv(dateFromSince(-endDay.value(),true));
-  feed2.parent(timelineP);
-  feed2.id("feed2");
+    endDay = createSlider(-timeSince(created)+1,-1,-1);
+    endDay.mousePressed(clickObject);
+    endDay.input(endDayInput);
+    endDay.parent(timelineP);
+    endDay.id("#endDay");
+    endDay.style("width","40%");
+    feed2 = createDiv(dateFromSince(-endDay.value(),true));
+    feed2.parent(timelineP);
+    feed2.id("feed2");
 
-  movie = createRadio();
-  movie.option("Still",0);
-  movie.option("Timeline",1);
-  movie.value(1);
-  movie.parent(timelineP);
+    movie = createRadio();
+    movie.mousePressed(clickObject);
+    movie.option("Still",0);
+    movie.option("Timeline",1);
+    movie.value(1);
+    movie.parent(timelineP);
 
-  var but = createButton("Run");
-  but.parent(timelineP);
-  but.mousePressed(runSketch);
+    var but = createButton("Run");
+    but.parent(timelineP);
+    but.mousePressed(runSketch);
+
+    styles();
+  }
 }
 
 function selectProfile() {
+  objectClicked = true;
   type = split(this.elt.value,",")[0];
   created = new Date(split(this.elt.value,",")[1]);
   //console.log(type);
@@ -626,19 +873,21 @@ function selectProfile() {
 function minusStartDayInput() {
   //console.log(endDay.value());
   if (endDay.value()<minusStartDay.value()) {
-    endDay.value(minusStartDay.value());
+    endDay.value(minusStartDay.value()+1);
+    feed2.html(dateFromSince(-endDay.value(),true));
   }
   feed1.html(dateFromSince(-minusStartDay.value(),true));
 }
 
 function endDayInput() {
   if (endDay.value()<minusStartDay.value()) {
-    endDay.value(minusStartDay.value());
+    endDay.value(minusStartDay.value()+1);
   }
-  feed2.html(dateFromSince(-endDay.value()+1,true));
+  feed2.html(dateFromSince(-endDay.value(),true));
 }
 
 function runSketch() {
+  objectClicked = true;
   if (movie.value() == 0) {
     initialPointSize = 1;
     initialAlphaLevel = 5;
@@ -654,7 +903,7 @@ function runSketch() {
   if (type == "APP") {
     dimension = "appId";
   }
-  var daysAgo = -minusStartDay.value()+frame;
+   var daysAgo = -minusStartDay.value()-frame;
  gapi.client.analytics.data.ga.get({
     'ids': 'ga:' + profileId,
     'start-date': (daysAgo+1)+'daysAgo',
@@ -667,17 +916,24 @@ function runSketch() {
   .then(null, function(err) {
       // Log any errors.
       console.log(err);
-      createP("Error");
+      var err = createP("Error. Please retry");
+      err.addClass("setupB");
+      err.addClass("error");
+      styles();
   });
 }
 
 function formatResponse(response) {
+  //console.log(response);
   if (response) {
     locations.push(response.result.rows);
-    //console.log(locations)
     paintMap(true);
   } else {
     console.log("Error. No response");
+    var err = createP("Error. Please retry");
+    err.addClass("setupB");
+    err.addClass("error");
+    styles();
   }
 }
 var locations = [];
@@ -695,41 +951,91 @@ function dateFromSince(since,slashes) {
   d.setDate(d.getDate()-since);
   var date;
   if (slashes) {
-    date = d.getDate()+"/"+d.getMonth()+"/"+d.getFullYear();
+    date = d.getDate()+"/"+(d.getMonth()+1)+"/"+d.getFullYear();
   } else {
-    date = nf(d.getFullYear(),4)+nf(d.getMonth(),2)+nf(d.getDate(),2);
+    date = nf(d.getFullYear(),4)+nf((d.getMonth()+1),2)+nf(d.getDate(),2);
   }
   //console.log(date);
   return date;
 }
 
-/////////////////////////////////////////////////This section is mostly taken from Daniel Shiffman https://gist.github.com/shiffman/a0d2fde31f571163c730ba0da4a01c82
-var clat = 0;
-var clon = 0;
-var ww;
-var hh;//512*85/160;
-var zoom = 1;
-
-function mercX(lon) {
-  //console.log("in "+lon);
-  lon = radians(lon);
-  var a = (hh/2 / PI) * pow(2, zoom);
-  var b = lon + PI;
-  //console.log("out "+a * b);
-  return a * b;
+//canvaas resize, reprint if draing and done but not paintFromdraw
+function windowResized() {//doing strange things
+  if (windowWidth != ww) {
+    ww = windowWidth;
+    hh = windowWidth*(512/1024);//512*85/160;
+    resizeCanvas(ww,hh);
+    if (drawing && loaded && !paintFromDraw) {
+        background(0);
+        refreshMap();
+        if (movie.value() == 0) {
+          fill(255);
+          textAlign(CENTER,CENTER);
+          text("Window resized. Please update result",width/2,height/2);
+        }
+    }
+    styles();
+  }
 }
 
-function mercY(lat) {
-  lat = radians(lat);
-  var a = (hh/2 / PI) * pow(2, zoom);
-  var b = tan(PI / 4 + lat / 2);
-  var c = PI - log(b);
-  return a * c;
-}
-/////////////////////////////////////////
+function styles() {//
+  var p = selectAll("P");
+  for (var i=0;i<p.length;i++) {
+    p[i].style("font-size",height/50+"px");
+    if (!p[i].class().includes("unselectable")) p[i].addClass("unselectable");
+  }
+  /*var sid = selectAll(".sided");
+  for (var i=0;i<sid.length;i++) {
+    sid[i].style("padding-left",height/1000+"px");
+  }*/
+  for (let i=0;i<labelDivs.length;i++) {
+    labelDivs[i].style("margin",height/300+"px");
+  }
+  var but = selectAll("button");
+  for (var i=0;i<but.length;i++) {
+    but[i].style("font-size",height/40+"px");
+    but[i].style("margin",height/300+"px");
+    
+    but[i].style("padding",height/1000+"px");
 
-/*function windowResized() {//doing strange things
-  ww = windowWidth;
-  hh = windowWidth*(512/1024);//512*85/160;
-  resizeCanvas(ww,hh);
-}*/
+    if (!but[i].class().includes("unselectable")) but[i].addClass("unselectable");
+  }
+  var sBut = selectAll(".setupB");
+  for (var i=0;i<sBut.length;i++) {
+    sBut[i].style("margin-left",height/200+"px");
+    sBut[i].addClass("unselectable");
+  }
+
+  var h = selectAll("h2");
+  for (var i=0;i<h.length;i++) {
+    h[i].style("font-size",height/20+"px");
+    if (!h[i].class().includes("unselectable")) h[i].addClass("unselectable");
+  }
+  var r = selectAll("radio");
+  for (var i=0;i<r.length;i++) {
+    //r[i].style('transform','scale('height/1000+')');
+    if (!r[i].class().includes("unselectable")) r[i].addClass("unselectable");
+  }
+  var s = selectAll("slider");
+  for (var i=0;i<s.length;i++) {
+    //s[i].style("cursor","pointer");
+    if (!s[i].class().includes("unselectable")) s[i].addClass("unselectable");
+  }
+  var b = selectAll("br");
+  for (var i=0;i<b.length;i++) {
+    b[i].style("line-height",height/80+"px");
+    if (!b[i].class().includes("unselectable")) b[i].addClass("unselectable");
+  }
+  var l = selectAll("label");
+  for (var i=0;i<l.length;i++) {
+    l[i].style("font-size",height/70+"px");
+    l[i].style("color","white");
+    if (!b[i].class().includes("unselectable")) b[i].addClass("unselectable");
+  }
+}
+
+function setZoom() {
+  doRefreshMap = true;
+  console.log("doRefreshMap zoom");
+  zoom = pow(zoomLevel.value()/100,2);
+}

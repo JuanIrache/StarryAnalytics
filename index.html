@@ -1,6 +1,16 @@
 <!DOCTYPE html>
 <html>
 <head>
+	<!-- Global site tag (gtag.js) - Google Analytics -->
+	<script async src="https://www.googletagmanager.com/gtag/js?id=UA-45790897-1"></script>
+	<script>
+	  window.dataLayer = window.dataLayer || [];
+	  function gtag(){dataLayer.push(arguments);}
+	  gtag('js', new Date());
+
+	  gtag('config', 'UA-45790897-1');
+	</script>
+
 	<meta charset="UTF-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
@@ -23,15 +33,20 @@
 			margin:auto;
 		}
 		</style>
-</head>
-<body>
 
-<!--<button id="auth-button" hidden>Authorize</button>-->
+		<meta name="viewport" content="user-scalable=no,initial-scale=1,maximum-scale=1,minimum-scale=1,width=device-width">
+</head>
+<body style="background-color:#0d0d0d;">
+
+<button id="auth-button" hidden>Authorize</button>
 
 <style>
 p {
 	color:white;
 	text-align: center;
+}
+a {
+	color:white;
 }
 h2 {
 	color:white;
@@ -39,10 +54,21 @@ h2 {
 }
 .sided {
 	text-align:left !important;
-	padding-left:10px;
+	/*padding-left:10px;*/
 }
 button {
 	margin:5px;
+}
+.unselectable {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+.noLine {
+   height:0;
 }
 </style>
 

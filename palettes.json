@@ -1,5 +1,6 @@
 {
   "description": "The top 200 most popular palettes on colourlovers.com",
+  "source": "https://github.com/dariusk/corpora/blob/master/data/colors/palettes.json",
   "palettes": [
     [
       "#69D2E7",
