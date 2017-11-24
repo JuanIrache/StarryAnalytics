@@ -336,6 +336,7 @@ function paintMap(advance) {
           labelDivs[i].id("label"+i);
           labelDivs[i].parent(lin);
           labelDivs[i].mousePressed(clickObject);
+          break;
         } else {
           labelDivs[i] = createDiv(labels[i]);
           labelDivs[i].id("label"+i);
@@ -570,7 +571,7 @@ function updateFeedbackFrame() {
 }
 
 //////////////google data retrieving
-var CLIENT_ID = 'REPLACE WITH CLIENT ID';
+var CLIENT_ID = '347798334249-tf4endbgfnkh6670g5k5le0t5ljhv50j.apps.googleusercontent.com';
 // Set authorized scope.
 var SCOPES = ['https://www.googleapis.com/auth/analytics.readonly'];
 
@@ -1039,3 +1040,6 @@ function setZoom() {
   console.log("doRefreshMap zoom");
   zoom = pow(zoomLevel.value()/100,2);
 }
+
+
+
