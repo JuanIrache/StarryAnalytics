@@ -2,8 +2,8 @@ Starry Analytics
 ============================
 This tool uses Google Analytics API to access the logged in user's analytics data (if they do use Analytics on a website or an app) and display accurately and in an interesting way, on a world map. Built with P5js. You can use the tool here: http://tailorandwayne.com/starry-analytics/
 
-Analytics API: https://developers.google.com/analytics/devguides/config/mgmt/v3/quickstart/web-js
-P5js: https://p5js.org/
+- Analytics API: https://developers.google.com/analytics/devguides/config/mgmt/v3/quickstart/web-js
+- P5js: https://p5js.org/
 
 TODO
 - logout not working, checked all documentation on the matter. Must be missing something ( gapi.auth.signout() )
