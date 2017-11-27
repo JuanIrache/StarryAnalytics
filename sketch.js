@@ -1,6 +1,6 @@
 var center;
 var ww;
-var hh;//512*85/160;
+var hh;
 var img;
 var sliderP;
 var palettesJSON;
@@ -63,7 +63,7 @@ function preload() {
 function setup() {
   ww = windowWidth;
   hh = windowWidth*(512/1024);//512*85/160;
-  
+
   can = createCanvas(ww,hh);
   can.position(0,0);
   can.style("z-index","-1");
@@ -99,39 +99,46 @@ function mouseReleased() {
 
 function doubleClicked() {
   if (loaded && !paintFromDraw && !objectClicked) {
-    var move = createVector((width/2-mouseX),height/2-mouseY);
-      move.x = map(move.x,-width/2,width/2,-180,180);//convert pixels to latlong, approx
-      move.y = map(move.y,-height/2,height/2,-90,90);
-      center.x -= move.x/zoom;
-      center.y += move.y/zoom;//
-      doRefreshMap = true;
-      console.log("doRefreshMap double");
-    var preZoom = zoomLevel.value()*1.4;
-    zoomLevel.value(constrain(preZoom,100,775));
-    setZoom();
+    let x = mouseX-width/2;
+    let y = mouseY-height/2;
+    let cx = webMercX(center.x,zoom);
+    let cy = webMercY(center.y,zoom);
+    let tx = inverseWebMercX(x+cx,zoom);
+    let ty = inverseWebMercY(y+cy,zoom);
+    center = createVector(tx,ty);
+    doRefreshMap = true;
+    zoom++;
+    refreshZoom();
     return false;
   }
 }
 
 function mouseWheel(event) {
   if (loaded && !paintFromDraw && !objectClicked) {
-    var preZoom = zoomLevel.value()-(event.delta/3);
-    zoomLevel.value(constrain(preZoom,100,775));
-    setZoom();
+    let preZoom = zoom;
+    zoom -= event.delta/300;
+    refreshZoom();
+     if (zoom != preZoom) doRefreshMap = true;
   }
   //uncomment to block page scrolling
   return false;
 }
 
 function mouseDragged() {
-  if (loaded && !objectClicked && !paintFromDraw && zoom > 1) {
-      var move = createVector((mouseX-pmouseX),mouseY-pmouseY);
-      move.x = map(move.x,-width/2,width/2,-180,180);//convert pixels to latlong, approx
-      move.y = map(move.y,-height/2,height/2,-90,90);
-      center.x -= move.x/zoom;
-      center.y += move.y/zoom;//
+  if (loaded && !objectClicked && !paintFromDraw /*aqui&& zoom > 1*/) {
+      let x = mouseX-width/2;
+      let y = mouseY-height/2;
+      let cx = webMercX(center.x,zoom);
+      let cy = webMercY(center.y,zoom);
+      let tx = inverseWebMercX(x+cx,zoom);
+      let ty = inverseWebMercY(y+cy,zoom);
+      let px = pmouseX-width/2;
+      let py = pmouseY-height/2;
+      let ptx = inverseWebMercX(px+cx,zoom);
+      let pty = inverseWebMercY(py+cy,zoom);
+      center.x -= tx-ptx;
+      center.y -= ty-pty;//
       doRefreshMap = true;
-      console.log("doRefreshMap drag");
     return false;
   }
 }
@@ -187,8 +194,8 @@ function paintMap(advance) {
     loadedP.addClass("sided");
   }
 
-  
-  
+
+
 
   if (movie.value()==1 || !drawing || addBackground) {
     if (movie.value()==1 || addBackground) {
@@ -208,6 +215,10 @@ function paintMap(advance) {
     multiplier = pointSize.value()/10;
   }
   if (locations[frame] && locations[frame].length > 0) {
+    push();
+    translate(width/2,height/2);
+    var cx = webMercX(center.x,zoom);
+    var cy = webMercY(center.y,zoom);
   for (let i=0;i<locations[frame].length;i++) {
     if (locations[frame].length > brightestFrame.value) {
       brightestFrame.index = frame;
@@ -238,23 +249,17 @@ function paintMap(advance) {
 
         stroke (red(c),green(c),blue(c),alpha);
         var lon = locations[frame][i][1];
-        var lat = -locations[frame][i][0];
-        lon = parseFloat(lon-center.x);// wtf? returning string otherwise
-        lat = parseFloat(lat+center.y);
-        lon *= zoom;
-        lat *= zoom;
-        var x = map(lon,-180,180,-width/2,width/2);
-        var y = map(lat,-90,90,-height/2,height/2);
+        var lat = locations[frame][i][0];
+        var x = webMercX(lon,zoom) - cx;
+        var y = webMercY(lat,zoom) - cy;
         let value = (locations[frame][i][3])*multiplier;//divided as user wants?
         let diameter = (sqrt(value/PI)*2);
         strokeWeight(diameter);
-        push();
-        translate(width/2,height/2);
         point(x,y);
-        
-        pop();
-      } 
+        //console.log(x+":"+y);
+      }
     }
+    pop();
   } else {
     //console.log("Error. No locations for frame");
   }
@@ -265,7 +270,7 @@ function paintMap(advance) {
     } else {
       feedback.html("Loading data "+round(progress*100)+"%");
     }
-    
+
   if (advance) {
     if (minusStartDay.value()+frame < endDay.value()) {
       frame++;
@@ -306,7 +311,7 @@ function paintMap(advance) {
       lin = createDiv("Zoom");
       lin.parent(loadedP);
 
-      zoomLevel = createSlider(100,775,100);
+      zoomLevel = createSlider(100,1000,100);
       zoomLevel.mousePressed(clickObject);
       zoomLevel.parent(loadedP);
       zoomLevel.input(setZoom);
@@ -379,19 +384,28 @@ function paintMap(advance) {
 
 function prepareRefreshMap() {
   doRefreshMap = true;
-  console.log("doRefreshMap prepare");
 }
 
 function preRefreshMap() {
   if (loaded) {
-    center.x = constrain(center.x,-180+(180/zoom),180-(180/zoom));
-    center.y = constrain(center.y,-90+(90/zoom),90-(90/zoom));
+
+    /*let x = width/2;
+    let y = height/2;
+    let x0 = webMercX(0,zoom);
+    let y0 = webMercY(0,zoom);
+    let tx = inverseWebMercX(x+x0,zoom);
+    let ty = inverseWebMercY(y+y0,zoom);
+    maxXlon = 180-(width/2)*/
+    center.x = constrain(center.x,-180+(180/pow(2,zoom)),180-(180/pow(2,zoom)));
+    center.y = constrain(center.y,-90+(90/pow(2,zoom)),90-(90/pow(2,zoom)));
+    /*center.x = constrain(center.x,-tx,tx);
+    center.y = constrain(center.y,-ty,ty);*/
     if (movie.value() == 0) {
       frame = brightestFrame.index;
       updateFeedbackFrame();
     }
     refreshMap();
-    
+
     if (movie.value() == 0) {
       fill(255);
       noStroke();
@@ -505,7 +519,6 @@ function shuffleColours() {//
   palette = palettes[floor(random(0,palettes.length))];
   refreshLabels();
   doRefreshMap = true;
-  console.log("doRefreshMap shuffle");
 }
 
 function playTimelineStart() {
@@ -635,9 +648,9 @@ function signOut() {
  // gapi.auth.signOut();
 
    /*gapi.auth.authorize(
-    { 
-        'client_id': CLIENT_ID, 
-        'scope': SCOPES, 
+    {
+        'client_id': CLIENT_ID,
+        'scope': SCOPES,
         'immediate': false,
         cookie_policy: 'single_host_origin',
         response_type: 'token id_token'
@@ -650,7 +663,7 @@ function handleAccounts(response) {
   var check = select("#accountsP");
     if (check == null) {
   if (response.result.items && response.result.items.length) {
-    
+
       //logout not working
       //logOutB = createButton("Log out");
       //logOutB.id("LogGout");
@@ -685,7 +698,7 @@ function handleAccounts(response) {
       err.addClass("error");
       styles();
     }
-    
+
   }
 }
 
@@ -996,7 +1009,7 @@ function styles() {//
   for (var i=0;i<but.length;i++) {
     but[i].style("font-size",height/40+"px");
     but[i].style("margin",height/300+"px");
-    
+
     but[i].style("padding",height/1000+"px");
 
     if (!but[i].class().includes("unselectable")) but[i].addClass("unselectable");
@@ -1037,9 +1050,51 @@ function styles() {//
 
 function setZoom() {
   doRefreshMap = true;
-  console.log("doRefreshMap zoom");
-  zoom = pow(zoomLevel.value()/100,2);
+  zoom = zoomLevel.value()/100;
+  zoom = constrain(zoom,1,10);
 }
 
+function refreshZoom() {
+  zoom = constrain(zoom,1,10);
+  zoomLevel.value(zoom*100);
+}
 
+////////////////Web Mercator equations inspired by: https://github.com/CodingTrain/Rainbow-Code/blob/33d7b7508f3f92df807efa8ae1036b924c7bec97/CodingChallenges/CC_57_Earthquake_Viz/sketch.js
+function webMercX(lon, zoom) {
+  lon = radians(lon);
+  var w = height / 2;
+  var a = (w / PI) * pow(2, zoom);
+  var b = (lon + PI);
+  var x = a * b;
+  return x;
+}
 
+function webMercY(lat, zoom) {
+  lat = radians(lat);
+  var w = height / 2;
+  var a = (w / PI) * pow(2, zoom);
+  var c = tan(PI / 4 + lat / 2);
+  var b = PI - log(c);
+  var y = a * b;
+  //console.log("y:"+y);
+  return y;
+}
+
+function inverseWebMercX(x,zoom) {
+    var w = height / 2;
+    var a = (w / PI) * pow(2, zoom);
+    var b = x/a;
+    var lon = b-PI;
+    lon = degrees(lon);
+    return lon;
+}
+
+function inverseWebMercY(y,zoom) {
+  var w = height / 2;
+  var a = (w / PI) * pow(2, zoom);
+  var b = (y/a);
+  var c = exp(PI-b);
+  var lat = (atan(c) - (PI / 4))*2;
+  lat = degrees(lat);
+  return lat;
+}

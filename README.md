@@ -7,7 +7,6 @@ This tool uses Google Analytics API to access the logged in user's analytics dat
 
 TODO
 - logout not working, checked all documentation on the matter. Must be missing something ( gapi.auth.signout() )
-- Implement mercator equations for good representation when zooming in https://gist.github.com/shiffman/a0d2fde31f571163c730ba0da4a01c82 (latlong to pixel representation goes well, but have not succeeded with mouse coordinates to latlong)
 - improve mouse interaction (elements in front of canvas create trouble)
 - pinch on phones.
 - improve performance
