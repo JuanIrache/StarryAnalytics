@@ -1,3 +1,4 @@
+var locations = [];
 var center;
 var ww;
 var hh;
@@ -47,6 +48,7 @@ var addBackground = false;
 var timelineSet = false;
 var enableMovie1;
 var enableMovie2;
+//var graph;
 //var logOutB;
 
 var brightestFrame = {
@@ -63,7 +65,6 @@ function preload() {
 function setup() {
   ww = windowWidth;
   hh = windowWidth*(512/1024);//512*85/160;
-
   can = createCanvas(ww,hh);
   can.position(0,0);
   can.style("z-index","-1");
@@ -125,7 +126,7 @@ function mouseWheel(event) {
 }
 
 function mouseDragged() {
-  if (loaded && !objectClicked && !paintFromDraw /*aqui&& zoom > 1*/) {
+  if (loaded && !objectClicked && !paintFromDraw) {
       let x = mouseX-width/2;
       let y = mouseY-height/2;
       let cx = webMercX(center.x,zoom);
@@ -275,7 +276,11 @@ function paintMap(advance) {
     if (minusStartDay.value()+frame < endDay.value()) {
       frame++;
       if (!loaded) {
-        queryCoreReportingApi(selectedProfile);
+        if (local) {
+          loadJSON("/local/"+frame+".json",assign);
+        } else {
+          queryCoreReportingApi(selectedProfile);
+        }
       }
     } else if (!loaded) {
       loaded = true;
@@ -441,7 +446,7 @@ function loadLowButtons() {
   playTimeline.mousePressed(playTimelineStart);//
   playTimeline.parent(loadedP);
   playTimeline.addClass("movie");
-  enableMovie2 = createCheckbox('Download frames for movie', false);
+  enableMovie2 = createCheckbox('Download all frames for movie', false);
   enableMovie2.addClass("movie");
   enableMovie2.changed(toggleMovie2);
   enableMovie2.addClass("unselectable");
@@ -560,12 +565,15 @@ function savePhoto(noTLicked) {
   if (noTLicked == null) objectClicked = true;
   // put watermark
   var tempImage = get();
-  var graph = createGraphics(ww,hh);
-  graph.image(tempImage,0,0);
-  graph.fill(255,120);
-  graph.textAlign(RIGHT,BOTTOM);
-  graph.text("tailorandwayne.com/starry-analytics",graph.width*.98,graph.height*.97);
-  save(graph,dateFromSince(-minusStartDay.value()-frame,false),"png");
+  if (!local) {
+    fill(255,120);
+    textAlign(RIGHT,BOTTOM);
+    text("tailorandwayne.com/starry-analytics",width*.98,height*.97);
+  }
+  save(can,dateFromSince(-minusStartDay.value()-frame,false),"png");
+  blendMode(BLEND);
+  image(tempImage,0,0,width,height);
+  tempImage = null;
 }
 
 function slideTimeline() {
@@ -584,7 +592,7 @@ function updateFeedbackFrame() {
 }
 
 //////////////google data retrieving
-var CLIENT_ID = '347798334249-tf4endbgfnkh6670g5k5le0t5ljhv50j.apps.googleusercontent.com';
+var CLIENT_ID = 'REPLACE_CLIENT_ID';
 // Set authorized scope.
 var SCOPES = ['https://www.googleapis.com/auth/analytics.readonly'];
 
@@ -908,7 +916,11 @@ function runSketch() {
   }
   let timelineP = select("#timelineP");
   timelineP.hide();
+  if (local) {
+    loadJSON("/local/"+frame+".json",assign);
+  } else {
     queryCoreReportingApi(selectedProfile);
+  }
 }
 
   function queryCoreReportingApi(profileId) {
@@ -929,16 +941,28 @@ function runSketch() {
   .then(formatResponse)
   .then(null, function(err) {
       // Log any errors.
-      console.log(err);
-      var err = createP("Error. Please retry");
-      err.addClass("setupB");
-      err.addClass("error");
-      styles();
+      errorCount++
+      if (errorCount < 5) {
+        setTimeout(recallCore,30000);
+      } else {
+        console.log(err);
+        var err = createP("Error. Please retry");
+        err.addClass("setupB");
+        err.addClass("error");
+        styles();
+      }
   });
 }
 
+function recallCore() {
+  queryCoreReportingApi(selectedProfile);
+}
+
+var errorCount = 0;
+
 function formatResponse(response) {
   //console.log(response);
+  if (preLocal)  save(response, frame+".json");//save for offline testing
   if (response) {
     locations.push(response.result.rows);
     paintMap(true);
@@ -950,10 +974,8 @@ function formatResponse(response) {
     styles();
   }
 }
-var locations = [];
 
 // Add an event listener to the 'auth-button'.
-
 function timeSince(date) {
   var seconds = Math.floor((new Date() - date) / 1000);
   var interval = Math.floor(seconds / 86400);
@@ -1097,4 +1119,12 @@ function inverseWebMercY(y,zoom) {
   var lat = (atan(c) - (PI / 4))*2;
   lat = degrees(lat);
   return lat;
+}
+
+//for development
+var preLocal = false;//save json files locally for testing
+var local = false;
+function assign(response) {
+  locations[frame] = response.result.rows;
+  paintMap(true);
 }
