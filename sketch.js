@@ -119,7 +119,9 @@ function mouseWheel(event) {
     let preZoom = zoom;
     zoom -= event.delta/300;
     refreshZoom();
-     if (zoom != preZoom) doRefreshMap = true;
+     if (zoom != preZoom) {
+      doRefreshMap = true;
+    }
   }
   //uncomment to block page scrolling
   return false;
@@ -561,8 +563,8 @@ function redoStill() {
   background(0);
 }
 
-function savePhoto(noTLicked) {
-  if (noTLicked == null) objectClicked = true;
+function savePhoto(notClicked) {
+  if (notClicked != true) objectClicked = true;
   // put watermark
   var tempImage = get();
   if (!local) {
