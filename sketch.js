@@ -74,7 +74,7 @@ function setup() {
   refreshLabels()
 
   intro = createElement("h2","Starry Analytics");
-  introB = createP("Load your Google Analytics data and play with the settings to create the world map of your users' sessions.<br>For apps, each colour represents a package. For sites, colours are devices.<br>This is quite experimental, so expect bugs.<br>Can be quite slow when loading many dates or sessions. Select short time frames first.<br>Set points and opacity to low when creating stills. They will add up.<br>Have fun and feel free to provide feedback and contribute <a href='https://github.com/JuanIrache/StarryAnalytics' target='blank'>here</a>.<br> For a video example of what can be achieved, <a href='https://www.youtube.com/watch?v=w3-hyALXagU' target='blank'>click here</a><br>Built with <a href='https://p5js.org/' target='blank'>P5js</a>.");
+  introB = createP("Load your Google Analytics data and play with the settings to create the world map of your users' sessions.<br>For apps, each colour represents a package. For sites, colours are devices.<br>This is quite experimental, so expect bugs.<br>Can be quite slow when loading many dates or sessions. Select short time frames first.<br>Set points and opacity to low when creating stills. They will add up.<br>Have fun and feel free to provide feedback and contribute <a href='https://github.com/JuanIrache/StarryAnalytics' target='blank'>here</a>.<br> For a video example of what can be achieved, <a href='https://www.youtube.com/watch?v=w3-hyALXagU' target='blank'>click here</a>.<br>Built with <a href='https://p5js.org/' target='blank'>P5js</a>.");
   introB.id("introB");
   auth = select("#auth-button");
   auth.parent(introB);
@@ -626,7 +626,12 @@ function queryAccounts() {
 // Load the Google Analytics client library.
 gapi.client.load('analytics', 'v3').then(function() {
   // Get a list of all Google Analytics accounts for this user
-  gapi.client.analytics.management.accounts.list().then(handleAccounts);
+  gapi.client.analytics.management.accounts.list().then(handleAccounts).then(null, function(err) {
+    // Log any errors.
+    createP('Error. No analytics accounts found');
+    console.log(err);
+    styles();
+  });
 });
 }
 
