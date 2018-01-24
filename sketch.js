@@ -161,7 +161,6 @@ function refreshLabels() {
 
 function draw() {
   if (!drawing)  {
-    //background(0);
     image(img,0,0,width,height);
   } else if (paintFromDraw) {
     updateFeedbackFrame();
@@ -221,43 +220,27 @@ function paintMap(advance) {
     translate(width/2,height/2);
     let cx = webMercX(center.x,zoom);
     let cy = webMercY(center.y,zoom);
-  for (let i=0;i<locations[frame].length;i++) {
-    if (locations[frame].length > brightestFrame.value) {
-      brightestFrame.index = frame;
-      brightestFrame.value = locations[frame].length;
-    }
-    if (!(Number(locations[frame][i][1]) === 0 && Number(locations[frame][i][0]) === 0)) {
-        let c = color(0);
-          if (labels.indexOf(locations[frame][i][2]) === -1) {
-            labels.push(locations[frame][i][2]);
-          }
-
-        let labelColor = labels.indexOf(locations[frame][i][2]);
-
-        if (labelColor === 0) {
-          c = color(palette[0]);
-        } else if (labelColor === 1) {
-          c = color(palette[1]);
-        } else if (labelColor === 2) {
-          c = color(palette[2]);
-        } else if (labelColor === 3) {
-          c = color(palette[3]);
-        } else if (labelColor === 4) {
-          c = color(palette[4]);
-        } else {
-          c = color(255);
-        }
-
-        stroke (red(c),green(c),blue(c),alpha);
-        let lon = locations[frame][i][1];
-        let lat = locations[frame][i][0];
-        let x = webMercX(lon,zoom) - cx;
-        let y = webMercY(lat,zoom) - cy;
-        let value = (locations[frame][i][3])*multiplier;//divided as user wants?
-        let diameter = (sqrt(value/PI)*2);
-        strokeWeight(diameter);
-        point(x,y);
+    for (let i=0;i<locations[frame].length;i++) {
+      if (locations[frame].length > brightestFrame.value) {
+        brightestFrame.index = frame;
+        brightestFrame.value = locations[frame].length;
       }
+      if (labels.indexOf(locations[frame][i][2]) === -1) {
+        labels.push(locations[frame][i][2]);
+      }
+
+      let labelColor = labels.indexOf(locations[frame][i][2]);
+      let c = labelColor <= 4 ? color(palette[4]) : color(255);
+
+      stroke (red(c),green(c),blue(c),alpha);
+      let lon = locations[frame][i][1];
+      let lat = locations[frame][i][0];
+      let x = webMercX(lon,zoom) - cx;
+      let y = webMercY(lat,zoom) - cy;
+      let value = (locations[frame][i][3])*multiplier;//divided as user wants?
+      let diameter = (sqrt(value/PI)*2);
+      strokeWeight(diameter);
+      point(x,y);
     }
     pop();
   } else {
@@ -265,11 +248,8 @@ function paintMap(advance) {
   }
 
   let progress = frame/((endDay.value()-minusStartDay.value()));
-    if (loaded) {
-      feedback.html(""+round(progress*100)+"%");
-    } else {
-      feedback.html("Loading data "+round(progress*100)+"%");
-    }
+
+  feedback.html(loaded ? (""+round(progress*100)+"%") : ("Loading data "+round(progress*100)+"%"));
 
   if (advance) {
     if (minusStartDay.value()+frame < endDay.value()) {
@@ -393,17 +373,9 @@ function prepareRefreshMap() {
 function preRefreshMap() {
   if (loaded) {
 
-    /*let x = width/2;
-    let y = height/2;
-    let x0 = webMercX(0,zoom);
-    let y0 = webMercY(0,zoom);
-    let tx = inverseWebMercX(x+x0,zoom);
-    let ty = inverseWebMercY(y+y0,zoom);
-    maxXlon = 180-(width/2)*/
     center.x = constrain(center.x,-180+(180/pow(2,zoom)),180-(180/pow(2,zoom)));
     center.y = constrain(center.y,-90+(90/pow(2,zoom)),90-(90/pow(2,zoom)));
-    /*center.x = constrain(center.x,-tx,tx);
-    center.y = constrain(center.y,-ty,ty);*/
+
     if (Number(movie.value()) === 0) {
       frame = brightestFrame.index;
       updateFeedbackFrame();
@@ -636,53 +608,14 @@ gapi.client.load('analytics', 'v3').then(function() {
 
 function signOut() {
    gapi.auth.signOut();
-   //versions I tried
-/*gapi.auth.authorize({ 'client_id': CLIENT_ID, 'scope': SCOPES, 'immediate': false, cookie_policy: 'single_host_origin'}, function (authResult) {
-    gapi.auth.signOut();
-    setTimeout(function() {
-        gapi.auth.authorize({ 'client_id': CLIENT_ID, 'scope': SCOPES, 'immediate': true, cookie_policy: 'single_host_origin'}, function (authResult) {
-            if (authResult && !authResult.error)
-                alert("Still signed in");
-        })
-    }, 5000);
- });*/
-  /*gapi.auth.authorize({ 'client_id': CLIENT_ID, 'scope': SCOPES, 'immediate': false, cookie_policy: 'single_host_origin', response_type: 'token id_token'}, function (authResult) {
-    gapi.auth.signOut();
-    setTimeout(function() {
-      gapi.auth.authorize({ 'client_id': CLIENT_ID, 'scope': SCOPES, 'immediate': true, cookie_policy: 'single_host_origin'}, function (authResult) {
-        if (authResult && !authResult.error)
-          alert("Wrong! Still signed in");
-        else
-          alert("Correct! Signed out");
-      })
-    }, 5000);
-  });*/
-
- // gapi.auth.signOut();
-
-   /*gapi.auth.authorize(
-    {
-        'client_id': CLIENT_ID,
-        'scope': SCOPES,
-        'immediate': false,
-        cookie_policy: 'single_host_origin',
-        response_type: 'token id_token'
-    },
-    function (authResult) {   gapi.auth.signOut();}
-);*/
+   //not working
 }
 
 function handleAccounts(response) {
   let check = select("#accountsP");
-    if (check === null) {
+    if (check == null) {
   if (response.result.items && response.result.items.length) {
-
       //logout not working
-      //logOutB = createButton("Log out");
-      //logOutB.id("LogGout");
-      //logOutB.parent("#introB");
-      //logOutB.mousePressed(signOut);
-      //logOutB.mousePressed(clickObject);
       if (auth) auth.hide();
       let errs = selectAll(".error");
       for (let i=0;i<errs.length;i++) {
@@ -741,7 +674,7 @@ function handleProperties(response) {
 //console.log(response);
 // Handles the response from the webproperties list method.
 let check = select("#propertiesP");
-    if (check === null) {
+    if (check == null) {
       if (response.result.items && response.result.items.length) {
         let errs = selectAll(".error");
         for (let i=0;i<errs.length;i++) {
@@ -805,7 +738,7 @@ gapi.client.analytics.management.profiles.list({
 function handleProfiles(response) {
 
   let check = select("#profilesP");
-    if (check === null) {
+    if (check == null) {
   //console.log(response);
 // Handles the response from the profiles list method.
       if (response.result.items && response.result.items.length) {
@@ -969,7 +902,10 @@ function formatResponse(response) {
   //console.log(response);
   if (preLocal)  save(response, frame+".json");//save for offline testing
   if (response) {
-    locations.push(response.result.rows);
+    let prelocations = response.result.rows.filter(function(row) {
+      return (Number(row[1]) !== 0 && Number(row[0]) !== 0);
+    });
+    locations.push(prelocations);
     paintMap(true);
   } else {
     console.log("Error. No response");
@@ -990,13 +926,7 @@ function timeSince(date) {
 function dateFromSince(since,slashes) {
   let d = new Date();
   d.setDate(d.getDate()-since);
-  let date;
-  if (slashes) {
-    date = d.getDate()+"/"+(d.getMonth()+1)+"/"+d.getFullYear();
-  } else {
-    date = nf(d.getFullYear(),4)+nf((d.getMonth()+1),2)+nf(d.getDate(),2);
-  }
-  //console.log(date);
+  let date = slashes ? (d.getDate()+"/"+(d.getMonth()+1)+"/"+d.getFullYear()) : (nf(d.getFullYear(),4)+nf((d.getMonth()+1),2)+nf(d.getDate(),2));
   return date;
 }
 
