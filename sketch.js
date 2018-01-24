@@ -195,9 +195,6 @@ function paintMap(advance) {
     loadedP.addClass("sided");
   }
 
-
-
-
   if (Number(movie.value()) === 1 || !drawing || addBackground) {
     if (Number(movie.value()) === 1 || addBackground) {
       blendMode(BLEND);
@@ -684,9 +681,9 @@ let check = select("#propertiesP");
         accountsP.hide();
         let items = response.result.items;
         if (items.length > 1) {
-        let propertiesP = createP("Select Property<br>");
-        propertiesP.id("propertiesP");
-        propertiesP.addClass("setupB");
+          let propertiesP = createP("Select Property<br>");
+          propertiesP.id("propertiesP");
+          propertiesP.addClass("setupB");
           for (let i=0; i<items.length; i++) {
             let but = createButton(items[i].name);
             but.id(items[i].id);
@@ -1057,6 +1054,9 @@ function inverseWebMercY(y,zoom) {
 let preLocal = false;//save json files locally for testing
 let local = false;
 function assign(response) {
-  locations[frame] = response.result.rows;
+  let prelocations = response.result.rows.filter(function(row) {
+    return (Number(row[1]) !== 0 && Number(row[0]) !== 0);
+  });
+  locations[frame] = prelocations;
   paintMap(true);
 }
