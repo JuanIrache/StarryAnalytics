@@ -122,7 +122,7 @@ function mouseWheel(event) {
     let preZoom = zoom;
     zoom -= event.delta/300;
     refreshZoom();
-     if (zoom != preZoom) {
+     if (zoom !== preZoom) {
       doRefreshMap = true;
     }
   }
@@ -199,8 +199,8 @@ function paintMap(advance) {
 
 
 
-  if (movie.value()==1 || !drawing || addBackground) {
-    if (movie.value()==1 || addBackground) {
+  if (Number(movie.value()) === 1 || !drawing || addBackground) {
+    if (Number(movie.value()) === 1 || addBackground) {
       blendMode(BLEND);
     }
     background(0);
@@ -226,24 +226,23 @@ function paintMap(advance) {
       brightestFrame.index = frame;
       brightestFrame.value = locations[frame].length;
     }
-    if (!(locations[frame][i][1]==0 && locations[frame][i][0]==0)) {
+    if (!(Number(locations[frame][i][1]) === 0 && Number(locations[frame][i][0]) === 0)) {
         let c = color(0);
-          if (labels.indexOf(locations[frame][i][2])==-1) {
+          if (labels.indexOf(locations[frame][i][2]) === -1) {
             labels.push(locations[frame][i][2]);
-          } else {
           }
 
         let labelColor = labels.indexOf(locations[frame][i][2]);
 
-        if (labelColor == 0) {
+        if (labelColor === 0) {
           c = color(palette[0]);
-        } else if (labelColor == 1) {
+        } else if (labelColor === 1) {
           c = color(palette[1]);
-        } else if (labelColor == 2) {
+        } else if (labelColor === 2) {
           c = color(palette[2]);
-        } else if (labelColor == 3) {
+        } else if (labelColor === 3) {
           c = color(palette[3]);
-        } else if (labelColor == 4) {
+        } else if (labelColor === 4) {
           c = color(palette[4]);
         } else {
           c = color(255);
@@ -258,7 +257,6 @@ function paintMap(advance) {
         let diameter = (sqrt(value/PI)*2);
         strokeWeight(diameter);
         point(x,y);
-        //console.log(x+":"+y);
       }
     }
     pop();
@@ -358,7 +356,7 @@ function paintMap(advance) {
 
       refreshLabels();
 
-      if (movie.value() == 1) {
+      if (Number(movie.value()) === 1) {
         showButtons(".still",false);
         showButtons(".movie",true);
         showLabels(true);
@@ -371,7 +369,7 @@ function paintMap(advance) {
       }
     } else {
       paintFromDraw = false;
-      if (movie.value() == 1) {
+      if (Number(movie.value()) === 1) {
         showButtons(".still",false);
         showButtons(".movie",true);
         showLabels(true);
@@ -406,13 +404,13 @@ function preRefreshMap() {
     center.y = constrain(center.y,-90+(90/pow(2,zoom)),90-(90/pow(2,zoom)));
     /*center.x = constrain(center.x,-tx,tx);
     center.y = constrain(center.y,-ty,ty);*/
-    if (movie.value() == 0) {
+    if (Number(movie.value()) === 0) {
       frame = brightestFrame.index;
       updateFeedbackFrame();
     }
     refreshMap();
 
-    if (movie.value() == 0) {
+    if (Number(movie.value()) === 0) {
       fill(255);
       noStroke();
       textAlign(CENTER,CENTER);
@@ -539,14 +537,14 @@ function playTimelineStart() {
 
 function refreshMap() {
   let remMovie;
-  if (movie.value() == 0) {
+  if (Number(movie.value()) === 0) {
     remMovie = 0;
     movie.value(1);
   }
   if (!paintFromDraw) {
     paintMap(false);
   }
-  if (remMovie == 0) {
+  if (remMovie === 0) {
     movie.value(0);
   }
 
@@ -564,7 +562,7 @@ function redoStill() {
 }
 
 function savePhoto(notClicked) {
-  if (notClicked != true) objectClicked = true;
+  if (notClicked !== true) objectClicked = true;
   // put watermark
   let tempImage = get();
   if (!local) {
@@ -594,7 +592,7 @@ function updateFeedbackFrame() {
 }
 
 //////////////google data retrieving
-const CLIENT_ID = '347798334249-tf4endbgfnkh6670g5k5le0t5ljhv50j.apps.googleusercontent.com';
+const CLIENT_ID = '';
 // Set authorized scope.
 const SCOPES = ['https://www.googleapis.com/auth/analytics.readonly'];
 
@@ -676,7 +674,7 @@ function signOut() {
 
 function handleAccounts(response) {
   let check = select("#accountsP");
-    if (check == null) {
+    if (check === null) {
   if (response.result.items && response.result.items.length) {
 
       //logout not working
@@ -743,7 +741,7 @@ function handleProperties(response) {
 //console.log(response);
 // Handles the response from the webproperties list method.
 let check = select("#propertiesP");
-    if (check == null) {
+    if (check === null) {
       if (response.result.items && response.result.items.length) {
         let errs = selectAll(".error");
         for (let i=0;i<errs.length;i++) {
@@ -807,7 +805,7 @@ gapi.client.analytics.management.profiles.list({
 function handleProfiles(response) {
 
   let check = select("#profilesP");
-    if (check == null) {
+    if (check === null) {
   //console.log(response);
 // Handles the response from the profiles list method.
       if (response.result.items && response.result.items.length) {
@@ -917,7 +915,7 @@ function endDayInput() {
 
 function runSketch() {
   objectClicked = true;
-  if (movie.value() == 0) {
+  if (Number(movie.value()) === 0) {
     initialPointSize = 1;
     initialAlphaLevel = 5;
   }
@@ -933,7 +931,7 @@ function runSketch() {
   function queryCoreReportingApi(profileId) {
   // Query the Core Reporting API for the number sessions for
   let dimension = "deviceCategory";
-  if (type == "APP") {
+  if (type === "APP") {
     dimension = "appId";
   }
    let daysAgo = -minusStartDay.value()-frame;
@@ -1004,14 +1002,14 @@ function dateFromSince(since,slashes) {
 
 //canvaas resize, reprint if draing and done but not paintFromdraw
 function windowResized() {//doing strange things
-  if (windowWidth != ww) {
+  if (windowWidth !== ww) {
     ww = windowWidth;
     hh = windowWidth*(512/1024);//512*85/160;
     resizeCanvas(ww,hh);
     if (drawing && loaded && !paintFromDraw) {
         background(0);
         refreshMap();
-        if (movie.value() == 0) {
+        if (Number(movie.value()) === 0) {
           fill(255);
           textAlign(CENTER,CENTER);
           text("Window resized. Please update result",width/2,height/2);
@@ -1027,10 +1025,7 @@ function styles() {//
     p[i].style("font-size",height/50+"px");
     if (!p[i].class().includes("unselectable")) p[i].addClass("unselectable");
   }
-  /*let sid = selectAll(".sided");
-  for (let i=0;i<sid.length;i++) {
-    sid[i].style("padding-left",height/1000+"px");
-  }*/
+
   for (let i=0;i<labelDivs.length;i++) {
     labelDivs[i].style("margin",height/300+"px");
   }
