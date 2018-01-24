@@ -1,57 +1,60 @@
-var locations = [];
-var center;
-var ww;
-var hh;
-var img;
-var sliderP;
-var palettesJSON;
-var palette;
-var intro;
-var introB;
-var saveCan = false;
-var movie;
-var can;
-var drawing = false;
-var frame = 0;
-var initialPointSize = 3;
-var initialAlphaLevel = 255/2;
-var pointSize;
-var alphaLevel;
-var coloursButton;
-var changeToStill;
-var labelDivs = [];
-var loadedP;
-var takePhoto;
-var playTimeline;
-var feedbackFrame;
-var stillButton;
-var paintFromDraw;
-var allSlider;
-var labels = [];
-var selectedAccount;
-var profilesP;
-var selectedProfile;
-var endDay;
-var minusStartDay;
-var feed1;
-var feed2;
-var type;
-var created;
-var changeToMovie;
-var loaded;
-var feedback;
-var auth;
-var zoomLevel;
-var doRefreshMap;
-var zoom = 1;
-var addBackground = false;
-var timelineSet = false;
-var enableMovie1;
-var enableMovie2;
-//var graph;
-//var logOutB;
+"use strict";
 
-var brightestFrame = {
+let locations = [];
+let center;
+let ww;
+let hh;
+let img;
+let sliderP;
+let palettesJSON;
+let palette;
+let intro;
+let introB;
+let saveCan = false;
+let movie;
+let can;
+let drawing = false;
+let frame = 0;
+let initialPointSize = 3;
+let initialAlphaLevel = 255/2;
+let pointSize;
+let alphaLevel;
+let coloursButton;
+let changeToStill;
+let labelDivs = [];
+let loadedP;
+let takePhoto;
+let playTimeline;
+let feedbackFrame;
+let stillButton;
+let paintFromDraw;
+let allSlider;
+let labels = [];
+let selectedAccount;
+let profilesP;
+let selectedProfile;
+let endDay;
+let minusStartDay;
+let feed1;
+let feed2;
+let type;
+let created;
+let changeToMovie;
+let loaded;
+let feedback;
+let auth;
+let zoomLevel;
+let doRefreshMap;
+let zoom = 1;
+let addBackground = false;
+let timelineSet = false;
+let enableMovie1;
+let enableMovie2;
+let objectClicked;
+//let graph;
+//let logOutB;
+
+let brightestFrame = {
   index:0,
   value:0
 }
@@ -69,7 +72,7 @@ function setup() {
   can.position(0,0);
   can.style("z-index","-1");
   center = createVector(0,0);
-  var palettes = palettesJSON.palettes;
+  let palettes = palettesJSON.palettes;
   palette = palettes[floor(random(0,palettes.length))];
   refreshLabels()
 
@@ -148,7 +151,7 @@ function mouseDragged() {
 
 function refreshLabels() {
   if (labelDivs) {
-    for (var i=0;i<labelDivs.length;i++) {
+    for (let i=0;i<labelDivs.length;i++) {
       //console.log(labelDivs[i]);
       labelDivs[i].style("color",palette[i]);
       labelDivs[i].style("font-weight","bold");
@@ -157,12 +160,10 @@ function refreshLabels() {
 }
 
 function draw() {
-
   if (!drawing)  {
     //background(0);
     image(img,0,0,width,height);
   } else if (paintFromDraw) {
-
     updateFeedbackFrame();
     paintMap(true);
   }
@@ -179,14 +180,12 @@ function draw() {
 
 
 function paintMap(advance) {
-
   if (!drawing) {
-
     blendMode(BLEND);
     background(0);
     intro.hide();
     introB.hide();
-    var setuPs = selectAll(".setupB");
+    let setuPs = selectAll(".setupB");
     for (let i=0;i<setuPs.length;i++) {
       setuPs[i].hide();
     }
@@ -220,21 +219,21 @@ function paintMap(advance) {
   if (locations[frame] && locations[frame].length > 0) {
     push();
     translate(width/2,height/2);
-    var cx = webMercX(center.x,zoom);
-    var cy = webMercY(center.y,zoom);
+    let cx = webMercX(center.x,zoom);
+    let cy = webMercY(center.y,zoom);
   for (let i=0;i<locations[frame].length;i++) {
     if (locations[frame].length > brightestFrame.value) {
       brightestFrame.index = frame;
       brightestFrame.value = locations[frame].length;
     }
     if (!(locations[frame][i][1]==0 && locations[frame][i][0]==0)) {
-        var c = color(0);
+        let c = color(0);
           if (labels.indexOf(locations[frame][i][2])==-1) {
             labels.push(locations[frame][i][2]);
           } else {
           }
 
-        labelColor = labels.indexOf(locations[frame][i][2]);
+        let labelColor = labels.indexOf(locations[frame][i][2]);
 
         if (labelColor == 0) {
           c = color(palette[0]);
@@ -251,10 +250,10 @@ function paintMap(advance) {
         }
 
         stroke (red(c),green(c),blue(c),alpha);
-        var lon = locations[frame][i][1];
-        var lat = locations[frame][i][0];
-        var x = webMercX(lon,zoom) - cx;
-        var y = webMercY(lat,zoom) - cy;
+        let lon = locations[frame][i][1];
+        let lat = locations[frame][i][0];
+        let x = webMercX(lon,zoom) - cx;
+        let y = webMercY(lat,zoom) - cy;
         let value = (locations[frame][i][3])*multiplier;//divided as user wants?
         let diameter = (sqrt(value/PI)*2);
         strokeWeight(diameter);
@@ -264,7 +263,7 @@ function paintMap(advance) {
     }
     pop();
   } else {
-    //console.log("Error. No locations for frame");
+    console.log("Error. No locations for frame");
   }
 
   let progress = frame/((endDay.value()-minusStartDay.value()));
@@ -299,7 +298,7 @@ function paintMap(advance) {
         feedbackFrame.parent(loadedP);
         updateFeedbackFrame();//
       //}
-      var lin = createDiv("<br>Point Size");
+      let lin = createDiv("<br>Point Size");
       lin.parent(loadedP);
 
       pointSize = createSlider(10,1000,(initialPointSize*10));
@@ -440,7 +439,7 @@ function stillToMovie() {
 }
 
 function loadLowButtons() {
-  var lin = createDiv("<br>");
+  let lin = createDiv("<br>");
   lin.parent(loadedP);
   lin.addClass("movie");
   lin.addClass("noLine");
@@ -500,8 +499,8 @@ function toggleMovie2() {
 }
 
 function showButtons(s,vis) {
-  var buttons = selectAll(s);
-  for (var i=0; i<buttons.length;i++) {
+  let buttons = selectAll(s);
+  for (let i=0; i<buttons.length;i++) {
     if (vis) {
       buttons[i].show();
     } else {
@@ -511,7 +510,7 @@ function showButtons(s,vis) {
 }
 
 function showLabels(vis) {
-  for (var i=0; i<labelDivs.length;i++) {
+  for (let i=0; i<labelDivs.length;i++) {
     if (vis) {
       labelDivs[i].show();
     } else {
@@ -522,7 +521,7 @@ function showLabels(vis) {
 
 function shuffleColours() {//
   objectClicked = true;
-  var palettes = palettesJSON.palettes;
+  let palettes = palettesJSON.palettes;
   palette = palettes[floor(random(0,palettes.length))];
   refreshLabels();
   doRefreshMap = true;
@@ -539,8 +538,9 @@ function playTimelineStart() {
 }
 
 function refreshMap() {
+  let remMovie;
   if (movie.value() == 0) {
-    var remMovie = 0;
+    remMovie = 0;
     movie.value(1);
   }
   if (!paintFromDraw) {
@@ -566,7 +566,7 @@ function redoStill() {
 function savePhoto(notClicked) {
   if (notClicked != true) objectClicked = true;
   // put watermark
-  var tempImage = get();
+  let tempImage = get();
   if (!local) {
     fill(255,120);
     textAlign(RIGHT,BOTTOM);
@@ -594,15 +594,15 @@ function updateFeedbackFrame() {
 }
 
 //////////////google data retrieving
-var CLIENT_ID = 'REPLACE_CLIENT_ID';
+const CLIENT_ID = '347798334249-tf4endbgfnkh6670g5k5le0t5ljhv50j.apps.googleusercontent.com';
 // Set authorized scope.
-var SCOPES = ['https://www.googleapis.com/auth/analytics.readonly'];
+const SCOPES = ['https://www.googleapis.com/auth/analytics.readonly'];
 
 function authorize(event) {
   // Handles the authorization flow.
   // `immediate` should be false when invoked from the button click.
-  var useImmdiate = event ? false : true;
-  var authData = {
+  let useImmdiate = event ? false : true;
+  let authData = {
     client_id: CLIENT_ID,
     scope: SCOPES,
     immediate: useImmdiate,
@@ -611,7 +611,7 @@ function authorize(event) {
   };
 
   gapi.auth.authorize(authData, function(response) {
-    var authButton = document.getElementById('auth-button');
+    let authButton = document.getElementById('auth-button');
     if (response.error) {
       authButton.hidden = false;
     }
@@ -629,7 +629,7 @@ gapi.client.load('analytics', 'v3').then(function() {
   gapi.client.analytics.management.accounts.list().then(handleAccounts).then(null, function(err) {
     // Log any errors.
     createP('Error. No analytics accounts found');
-    console.log(err);
+    if (err) console.log(err);
     styles();
   });
 });
@@ -675,7 +675,7 @@ function signOut() {
 }
 
 function handleAccounts(response) {
-  var check = select("#accountsP");
+  let check = select("#accountsP");
     if (check == null) {
   if (response.result.items && response.result.items.length) {
 
@@ -686,17 +686,17 @@ function handleAccounts(response) {
       //logOutB.mousePressed(signOut);
       //logOutB.mousePressed(clickObject);
       if (auth) auth.hide();
-      var errs = selectAll(".error");
+      let errs = selectAll(".error");
       for (let i=0;i<errs.length;i++) {
         err[i].hide();
       }
       let items = response.result.items;
-      var accountsP = createP("Select Account<br>");
+      let accountsP = createP("Select Account<br>");
       accountsP.id("accountsP");
       accountsP.addClass("setupB");
       if (items.length>1) {
         for (let i=0; i<items.length; i++) {
-          var but = createButton(items[i].name);
+          let but = createButton(items[i].name);
           but.id(items[i].id);
           but.parent(accountsP);
           but.addClass("setupB");
@@ -708,7 +708,7 @@ function handleAccounts(response) {
       }
       styles();
     } else {
-      var err = createP('No accounts found for this user.');
+      let err = createP('No accounts found for this user.');
       err.addClass("setupB");
       err.addClass("error");
       styles();
@@ -733,7 +733,7 @@ gapi.client.analytics.management.webproperties.list(
   .then(null, function(err) {
     // Log any errors.
     createP('Error');
-    console.log(err);
+    if (err) console.log(err);
     styles();
   });
 }
@@ -742,10 +742,10 @@ function handleProperties(response) {
 
 //console.log(response);
 // Handles the response from the webproperties list method.
-var check = select("#propertiesP");
+let check = select("#propertiesP");
     if (check == null) {
       if (response.result.items && response.result.items.length) {
-        var errs = selectAll(".error");
+        let errs = selectAll(".error");
         for (let i=0;i<errs.length;i++) {
           err[i].hide();
         }
@@ -753,11 +753,11 @@ var check = select("#propertiesP");
         accountsP.hide();
         let items = response.result.items;
         if (items.length > 1) {
-        var propertiesP = createP("Select Property<br>");
+        let propertiesP = createP("Select Property<br>");
         propertiesP.id("propertiesP");
         propertiesP.addClass("setupB");
           for (let i=0; i<items.length; i++) {
-            var but = createButton(items[i].name);
+            let but = createButton(items[i].name);
             but.id(items[i].id);
             but.parent(propertiesP);
             but.addClass("setupB");
@@ -784,7 +784,7 @@ function selectProperty() {
   selectedProperty = this.elt.id;
   queryProfiles(selectedAccount, selectedProperty);
 }
-var selectedProperty;
+let selectedProperty;
 
 function queryProfiles(accountId, propertyId) {
 //console.log(accountId);
@@ -795,10 +795,10 @@ gapi.client.analytics.management.profiles.list({
 .then(handleProfiles)
 .then(null, function(err) {
     // Log any errors.
-    console.log(err);
-    var err = createP("Error. Please retry");
-    err.addClass("setupB");
-    err.addClass("error");
+    if (err) console.log(err);
+    let errb = createP("Error. Please retry");
+    errb.addClass("setupB");
+    errb.addClass("error");
     styles();
 
   });
@@ -806,12 +806,12 @@ gapi.client.analytics.management.profiles.list({
 
 function handleProfiles(response) {
 
-  var check = select("#profilesP");
+  let check = select("#profilesP");
     if (check == null) {
   //console.log(response);
 // Handles the response from the profiles list method.
       if (response.result.items && response.result.items.length) {
-        var errs = selectAll(".error");
+        let errs = selectAll(".error");
         for (let i=0;i<errs.length;i++) {
           err[i].hide();
         }
@@ -824,7 +824,7 @@ function handleProfiles(response) {
             profilesP.addClass("setupB");
           //profilesP.style("background-color","black");
             for (let i=0; i<items.length; i++) {
-              var but = createButton(items[i].name,items[i].type+","+items[i].created);
+              let but = createButton(items[i].name,items[i].type+","+items[i].created);
               but.id(items[i].id);
               but.parent(profilesP);
               but.addClass("setupB");
@@ -839,7 +839,7 @@ function handleProfiles(response) {
           styles();
         } else {
           console.log('No views (profiles) found for this user.');
-          var err = createP("No views (profiles) found for this user.");
+          let err = createP("No views (profiles) found for this user.");
           err.addClass("setupB");
           err.addClass("error");
           styles();
@@ -851,7 +851,7 @@ function timelineSettings() {
   if (!timelineSet) {
     timelineSet = true;
     if (profilesP) profilesP.hide();
-    var timelineP = createP("Select date range<br>");
+    let timelineP = createP("Select date range<br>");
     timelineP.id("timelineP");
     //timelineP.style("background-color","black");
     minusStartDay = createSlider(-timeSince(created),-2,-timeSince(created));
@@ -881,7 +881,7 @@ function timelineSettings() {
     movie.value(1);
     movie.parent(timelineP);
 
-    var but = createButton("Run");
+    let but = createButton("Run");
     but.parent(timelineP);
     but.mousePressed(runSketch);
 
@@ -932,11 +932,11 @@ function runSketch() {
 
   function queryCoreReportingApi(profileId) {
   // Query the Core Reporting API for the number sessions for
-  var dimension = "deviceCategory";
+  let dimension = "deviceCategory";
   if (type == "APP") {
     dimension = "appId";
   }
-   var daysAgo = -minusStartDay.value()-frame;
+   let daysAgo = -minusStartDay.value()-frame;
  gapi.client.analytics.data.ga.get({
     'ids': 'ga:' + profileId,
     'start-date': (daysAgo+1)+'daysAgo',
@@ -952,10 +952,10 @@ function runSketch() {
       if (errorCount < 5) {
         setTimeout(recallCore,30000);
       } else {
-        console.log(err);
-        var err = createP("Error. Please retry");
-        err.addClass("setupB");
-        err.addClass("error");
+        if (err) console.log(err);
+        let errb = createP("Error. Please retry");
+        errb.addClass("setupB");
+        errb.addClass("error");
         styles();
       }
   });
@@ -965,7 +965,7 @@ function recallCore() {
   queryCoreReportingApi(selectedProfile);
 }
 
-var errorCount = 0;
+let errorCount = 0;
 
 function formatResponse(response) {
   //console.log(response);
@@ -975,7 +975,7 @@ function formatResponse(response) {
     paintMap(true);
   } else {
     console.log("Error. No response");
-    var err = createP("Error. Please retry");
+    let err = createP("Error. Please retry");
     err.addClass("setupB");
     err.addClass("error");
     styles();
@@ -984,15 +984,15 @@ function formatResponse(response) {
 
 // Add an event listener to the 'auth-button'.
 function timeSince(date) {
-  var seconds = Math.floor((new Date() - date) / 1000);
-  var interval = Math.floor(seconds / 86400);
+  let seconds = Math.floor((new Date() - date) / 1000);
+  let interval = Math.floor(seconds / 86400);
   return interval;
 }
 
 function dateFromSince(since,slashes) {
-  var d = new Date();
+  let d = new Date();
   d.setDate(d.getDate()-since);
-  var date;
+  let date;
   if (slashes) {
     date = d.getDate()+"/"+(d.getMonth()+1)+"/"+d.getFullYear();
   } else {
@@ -1022,20 +1022,20 @@ function windowResized() {//doing strange things
 }
 
 function styles() {//
-  var p = selectAll("P");
-  for (var i=0;i<p.length;i++) {
+  let p = selectAll("P");
+  for (let i=0;i<p.length;i++) {
     p[i].style("font-size",height/50+"px");
     if (!p[i].class().includes("unselectable")) p[i].addClass("unselectable");
   }
-  /*var sid = selectAll(".sided");
-  for (var i=0;i<sid.length;i++) {
+  /*let sid = selectAll(".sided");
+  for (let i=0;i<sid.length;i++) {
     sid[i].style("padding-left",height/1000+"px");
   }*/
   for (let i=0;i<labelDivs.length;i++) {
     labelDivs[i].style("margin",height/300+"px");
   }
-  var but = selectAll("button");
-  for (var i=0;i<but.length;i++) {
+  let but = selectAll("button");
+  for (let i=0;i<but.length;i++) {
     but[i].style("font-size",height/40+"px");
     but[i].style("margin",height/300+"px");
 
@@ -1043,34 +1043,34 @@ function styles() {//
 
     if (!but[i].class().includes("unselectable")) but[i].addClass("unselectable");
   }
-  var sBut = selectAll(".setupB");
-  for (var i=0;i<sBut.length;i++) {
+  let sBut = selectAll(".setupB");
+  for (let i=0;i<sBut.length;i++) {
     sBut[i].style("margin-left",height/200+"px");
     sBut[i].addClass("unselectable");
   }
 
-  var h = selectAll("h2");
-  for (var i=0;i<h.length;i++) {
+  let h = selectAll("h2");
+  for (let i=0;i<h.length;i++) {
     h[i].style("font-size",height/20+"px");
     if (!h[i].class().includes("unselectable")) h[i].addClass("unselectable");
   }
-  var r = selectAll("radio");
-  for (var i=0;i<r.length;i++) {
+  let r = selectAll("radio");
+  for (let i=0;i<r.length;i++) {
     //r[i].style('transform','scale('height/1000+')');
     if (!r[i].class().includes("unselectable")) r[i].addClass("unselectable");
   }
-  var s = selectAll("slider");
-  for (var i=0;i<s.length;i++) {
+  let s = selectAll("slider");
+  for (let i=0;i<s.length;i++) {
     //s[i].style("cursor","pointer");
     if (!s[i].class().includes("unselectable")) s[i].addClass("unselectable");
   }
-  var b = selectAll("br");
-  for (var i=0;i<b.length;i++) {
+  let b = selectAll("br");
+  for (let i=0;i<b.length;i++) {
     b[i].style("line-height",height/80+"px");
     if (!b[i].class().includes("unselectable")) b[i].addClass("unselectable");
   }
-  var l = selectAll("label");
-  for (var i=0;i<l.length;i++) {
+  let l = selectAll("label");
+  for (let i=0;i<l.length;i++) {
     l[i].style("font-size",height/70+"px");
     l[i].style("color","white");
     if (!b[i].class().includes("unselectable")) b[i].addClass("unselectable");
@@ -1091,46 +1091,46 @@ function refreshZoom() {
 ////////////////Web Mercator equations inspired by: https://github.com/CodingTrain/Rainbow-Code/blob/33d7b7508f3f92df807efa8ae1036b924c7bec97/CodingChallenges/CC_57_Earthquake_Viz/sketch.js
 function webMercX(lon, zoom) {
   lon = radians(lon);
-  var w = height / 2;
-  var a = (w / PI) * pow(2, zoom);
-  var b = (lon + PI);
-  var x = a * b;
+  let w = height / 2;
+  let a = (w / PI) * pow(2, zoom);
+  let b = (lon + PI);
+  let x = a * b;
   return x;
 }
 
 function webMercY(lat, zoom) {
   lat = radians(lat);
-  var w = height / 2;
-  var a = (w / PI) * pow(2, zoom);
-  var c = tan(PI / 4 + lat / 2);
-  var b = PI - log(c);
-  var y = a * b;
+  let w = height / 2;
+  let a = (w / PI) * pow(2, zoom);
+  let c = tan(PI / 4 + lat / 2);
+  let b = PI - log(c);
+  let y = a * b;
   //console.log("y:"+y);
   return y;
 }
 
 function inverseWebMercX(x,zoom) {
-    var w = height / 2;
-    var a = (w / PI) * pow(2, zoom);
-    var b = x/a;
-    var lon = b-PI;
+    let w = height / 2;
+    let a = (w / PI) * pow(2, zoom);
+    let b = x/a;
+    let lon = b-PI;
     lon = degrees(lon);
     return lon;
 }
 
 function inverseWebMercY(y,zoom) {
-  var w = height / 2;
-  var a = (w / PI) * pow(2, zoom);
-  var b = (y/a);
-  var c = exp(PI-b);
-  var lat = (atan(c) - (PI / 4))*2;
+  let w = height / 2;
+  let a = (w / PI) * pow(2, zoom);
+  let b = (y/a);
+  let c = exp(PI-b);
+  let lat = (atan(c) - (PI / 4))*2;
   lat = degrees(lat);
   return lat;
 }
 
 //for development
-var preLocal = false;//save json files locally for testing
-var local = false;
+let preLocal = false;//save json files locally for testing
+let local = false;
 function assign(response) {
   locations[frame] = response.result.rows;
   paintMap(true);
