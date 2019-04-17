@@ -1,19 +1,18 @@
 var mouseHelper;
 function setMouseHelper() {
-  mouseHelper = function() {
-
+  mouseHelper = (function() {
     return {
-      objectClicked:false,
-      clickObject:function() {
-        mouseHelper.objectClicked=true;
+      objectClicked: false,
+      clickObject: function() {
+        mouseHelper.objectClicked = true;
       }
-    }
-  }();
+    };
+  })();
 }
 setMouseHelper();
 
 function mousePressed() {
-  if (mouseX<0 || mouseY<0 || mouseX>width || mouseY>height) {
+  if (mouseX < 0 || mouseY < 0 || mouseX > width || mouseY > height) {
     mouseHelper.clickObject();
   }
 }
@@ -24,13 +23,13 @@ function mouseReleased() {
 
 function doubleClicked() {
   if (loaded && !paintFromDraw && !mouseHelper.objectClicked) {
-    let x = mouseX-width/2;
-    let y = mouseY-height/2;
-    let cx = conversions.webMercX(center.x,zoom);
-    let cy = conversions.webMercY(center.y,zoom);
-    let tx = conversions.inverseWebMercX(x+cx,zoom);
-    let ty = conversions.inverseWebMercY(y+cy,zoom);
-    center = createVector(tx,ty);
+    var x = mouseX - width / 2;
+    var y = mouseY - height / 2;
+    var cx = conversions.webMercX(center.x, zoom);
+    var cy = conversions.webMercY(center.y, zoom);
+    var tx = conversions.inverseWebMercX(x + cx, zoom);
+    var ty = conversions.inverseWebMercY(y + cy, zoom);
+    center = createVector(tx, ty);
     doRefreshMap = true;
     zoom++;
     refreshZoom();
@@ -40,10 +39,10 @@ function doubleClicked() {
 
 function mouseWheel(event) {
   if (loaded && !paintFromDraw && !mouseHelper.objectClicked) {
-    let preZoom = zoom;
-    zoom -= event.delta/300;
+    var preZoom = zoom;
+    zoom -= event.delta / 300;
     refreshZoom();
-     if (zoom !== preZoom) {
+    if (zoom !== preZoom) {
       doRefreshMap = true;
     }
   }
@@ -53,19 +52,19 @@ function mouseWheel(event) {
 
 function mouseDragged() {
   if (loaded && !mouseHelper.objectClicked && !paintFromDraw) {
-      let x = mouseX-width/2;
-      let y = mouseY-height/2;
-      let cx = conversions.webMercX(center.x,zoom);
-      let cy = conversions.webMercY(center.y,zoom);
-      let tx = conversions.inverseWebMercX(x+cx,zoom);
-      let ty = conversions.inverseWebMercY(y+cy,zoom);
-      let px = pmouseX-width/2;
-      let py = pmouseY-height/2;
-      let ptx = conversions.inverseWebMercX(px+cx,zoom);
-      let pty = conversions.inverseWebMercY(py+cy,zoom);
-      center.x -= tx-ptx;
-      center.y -= ty-pty;//
-      doRefreshMap = true;
+    var x = mouseX - width / 2;
+    var y = mouseY - height / 2;
+    var cx = conversions.webMercX(center.x, zoom);
+    var cy = conversions.webMercY(center.y, zoom);
+    var tx = conversions.inverseWebMercX(x + cx, zoom);
+    var ty = conversions.inverseWebMercY(y + cy, zoom);
+    var px = pmouseX - width / 2;
+    var py = pmouseY - height / 2;
+    var ptx = conversions.inverseWebMercX(px + cx, zoom);
+    var pty = conversions.inverseWebMercY(py + cy, zoom);
+    center.x -= tx - ptx;
+    center.y -= ty - pty; //
+    doRefreshMap = true;
     return false;
   }
 }

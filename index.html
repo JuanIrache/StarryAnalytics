@@ -1,84 +1,82 @@
 <!DOCTYPE html>
 <html>
-<head>
-	<!-- Global site tag (gtag.js) - Google Analytics -->
-	<script async src="https://www.googletagmanager.com/gtag/js?id=UA-45790897-1"></script>
-	<script>
-	  window.dataLayer = window.dataLayer || [];
-	  function gtag(){dataLayer.push(arguments);}
-	  gtag('js', new Date());
+  <head>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-45790897-1"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag('js', new Date());
 
-	  gtag('config', 'UA-45790897-1');
-	</script>
+      gtag('config', 'UA-45790897-1');
+    </script>
 
-	<meta charset="UTF-8">
-	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-	<title>Starry Analytics by Tailor And Wayne</title>
+    <title>Starry Analytics by Tailor And Wayne</title>
 
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+      }
+      canvas {
+        margin: auto;
+      }
+    </style>
 
-	<script src="libraries/p5.js"></script>
-	<script src="libraries/p5.dom.min.js"></script>
-	<script src="modules/conversions.js"></script>
-	<script src="modules/canvasHelper.js"></script>
-	<script src="modules/analyticsHelper.js"></script>
-	<script src="modules/dateHelper.js"></script>
-	<script src="modules/mouseHelper.js"></script>
-	<script src="modules/paletteHelper.js"></script>
-	<script src="modules/devHelper.js"></script>
-	<script src="sketch.js"></script>
+    <meta name="viewport" content="user-scalable=no,initial-scale=1,maximum-scale=1,minimum-scale=1,width=device-width" />
+  </head>
+  <body style="background-color:#0d0d0d;">
+    <button id="auth-button" hidden>Authorize</button>
 
-	<style>
-		body {
-			margin:0;
-			padding:0;
-			overflow: hidden;
-		}
-		canvas {
-			margin:auto;
-		}
-		</style>
+    <style>
+      p {
+        color: white;
+        text-align: center;
+      }
+      a {
+        color: white;
+      }
+      h2 {
+        color: white;
+        text-align: center;
+      }
+      .sided {
+        text-align: left !important;
+        /*padding-left:10px;*/
+      }
+      button {
+        margin: 5px;
+      }
+      .unselectable {
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        -khtml-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+      }
+      .noLine {
+        height: 0;
+      }
+    </style>
 
-		<meta name="viewport" content="user-scalable=no,initial-scale=1,maximum-scale=1,minimum-scale=1,width=device-width">
-</head>
-<body style="background-color:#0d0d0d;">
-
-<button id="auth-button" hidden>Authorize</button>
-
-<style>
-p {
-	color:white;
-	text-align: center;
-}
-a {
-	color:white;
-}
-h2 {
-	color:white;
-	text-align: center;
-}
-.sided {
-	text-align:left !important;
-	/*padding-left:10px;*/
-}
-button {
-	margin:5px;
-}
-.unselectable {
-    -webkit-touch-callout: none;
-    -webkit-user-select: none;
-    -khtml-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-}
-.noLine {
-   height:0;
-}
-</style>
-
-<script src="https://apis.google.com/js/client.js?onload=authorize"></script>
-
-</body>
+    <script src="libraries/p5.min.js"></script>
+    <script src="libraries/p5.dom.min.js"></script>
+    <script src="modules/conversions.js"></script>
+    <script src="modules/canvasHelper.js"></script>
+    <script src="modules/analyticsHelper.js"></script>
+    <script src="modules/dateHelper.js"></script>
+    <script src="modules/mouseHelper.js"></script>
+    <script src="modules/paletteHelper.js"></script>
+    <script src="modules/devHelper.js"></script>
+    <script src="sketch.js"></script>
+    <script src="https://apis.google.com/js/client.js?onload=authorize"></script>
+  </body>
 </html>

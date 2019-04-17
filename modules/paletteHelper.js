@@ -1,17 +1,17 @@
 var paletteHelper;
 function setPaletteHelper() {
-  paletteHelper = function() {
-    let palettesJSON = loadJSON("palettes.json");
-    let palettes;
+  paletteHelper = (function() {
+    var palettesJSON = loadJSON('palettes.json');
+    var palettes;
     return {
-      loadPalettes:function() {
+      loadPalettes: function() {
         palettes = palettesJSON.palettes;
         paletteHelper.loadPalette();
       },
-      palette:[],
-      loadPalette:function() {
-        paletteHelper.palette = palettes[floor(random(0,palettes.length))];
+      palette: [],
+      loadPalette: function() {
+        paletteHelper.palette = palettes[floor(random(0, palettes.length))];
       }
-    }
-  }();
+    };
+  })();
 }
